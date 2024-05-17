@@ -37,6 +37,7 @@
     "clean": "hardhat clean"
   },
   "dependencies": {
+    "@adrastia-oracle/adrastia-core": "^4.7.0",
     "@openzeppelin/contracts": "^5.0.2",
     "@openzeppelin/contracts-upgradeable": "^5.0.2"
   }
