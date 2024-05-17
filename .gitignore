@@ -1,0 +1,30 @@
+# Secrets
+.env
+.env.*
+
+# Hardhat files
+cache
+artifacts
+
+# Coverage reports
+coverage.json
+coverage
+
+# IDEs
+.vscode
+
+# Generated files
+node_modules
+dist
+typechain
+typechain-types
+cache
+
+# OS files
+.DS_Store
+
+# Compilers
+soljson-*
+
+# Hardhat Ignition default folder for deployments against a local node
+ignition/deployments/chain-31337
