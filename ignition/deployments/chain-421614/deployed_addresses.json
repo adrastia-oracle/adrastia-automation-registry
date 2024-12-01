@@ -1,0 +1,21 @@
+{
+  "PoolBillingFacet#BillingFacet": "0x2E95a29721d5287dCD18C330ffC9ceCA1F9a8c87",
+  "PoolDiamond#DiamondCutFacet": "0xa0F98ECb0a49929be6C62Bd2623D3f69dfB1AF49",
+  "PoolDiamond#DiamondLoupeFacet": "0x216Bc1b5136eDF6cB26BA505A866097d5Ab4233e",
+  "PoolDiamond#OwnershipFacet": "0xa5780375f740590eB44daAbe816e42fDD4249aEE",
+  "PoolExecutorImplementation#ExecutorImplementation": "0xC4A035097F21c500e98DB73E9922CF5cc9E18460",
+  "PoolImplementation#PoolImplementation": "0x38e9eCa39D66E50c4803C26241D05964A6f393a3",
+  "PoolWorkFacet#WorkFacet": "0x328c24EE3842199417f0dfc5c8f0e2D0A9b5cA67",
+  "RegistryDiamond#DiamondCutFacet": "0x06E8c7F44d43E4A9Dc721DB09117845b2547d8b9",
+  "RegistryDiamond#DiamondLoupeFacet": "0x8C745bAF03CD7E2EAAe884C24610bE28cc42873b",
+  "RegistryDiamond#OwnershipFacet": "0x94b78606794E4b2d150e89d7D4c573441449e15C",
+  "RegistryFactoryImplementation#RegistryFactoryImplementation": "0x49cac32CDbCaFb77028b320859023C3EA2Cf4E0B",
+  "RegistryImplementation#RegistryImplementation": "0xeaD46C9F4B5C874833C3D9e1b810AeD5253a28BE",
+  "PoolDiamond#PoolDiamond": "0xe642cDC36C3d612f2161aC0792e3afc7333B956c",
+  "Protocol#RegistryFactoryBeacon": "0xD6E57a78fE5AFFA3dF76E71Be10Ec473e072C4f1",
+  "RegistryDiamond#RegistryDiamond": "0x98f9Eb5B761c84b7325A9e273bFa0ca5386E8CdD",
+  "PoolDiamond#IDiamondCut": "0xe642cDC36C3d612f2161aC0792e3afc7333B956c",
+  "Protocol#RegistryFactoryProxy": "0x64708952Ff495EA4397079e83772C986b57BAB75",
+  "Protocol#AutomationRegistryFactory": "0x64708952Ff495EA4397079e83772C986b57BAB75",
+  "ArbitrumL1GasCalculator#ArbitrumL1GasCalculator": "0x006c8D8Cbdde7d071dC5D90FF46689d78eDF3B43"
+}
