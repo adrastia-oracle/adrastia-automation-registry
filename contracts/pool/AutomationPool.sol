@@ -136,7 +136,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         nonReentrant
         whenOpen
         whenNotInDebt
-        returns (WorkDefinition memory workDefinition, PerformWorkItem[] memory workNeeded)
+        returns (uint256 workRequiredCount, WorkDefinition memory workDefinition, CheckedWorkItem[] memory checkedWorkItems)
     {
         _authCheckWork();
 
@@ -155,16 +155,16 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
         OffchainCheckDataHandling dataHandling = checkParams.offchainCheckDataHandling;
 
-        uint256 offchainDataLen = offchainData.itemsData.length;
-        if (dataHandling != OffchainCheckDataHandling.IGNORE && offchainDataLen != workLength) {
-            // We're expected to handle offchain data, but the amount does not match the work items. Revert.
-            revert("OffchainDataMismatch"); // TODO: Custom revert
+        {
+            uint256 offchainDataLen = offchainData.itemsData.length;
+            if (dataHandling != OffchainCheckDataHandling.IGNORE && offchainDataLen != workLength) {
+                // We're expected to handle offchain data, but the amount does not match the work items. Revert.
+                revert("OffchainDataMismatch"); // TODO: Custom revert
+            }
         }
 
         // Create call array
         IPoolExecutor.Call[] memory calls = new IPoolExecutor.Call[](workLength);
-        uint64[] memory performGasLimits = new uint64[](workLength);
-        uint128[] memory values = new uint128[](workLength);
         bytes[] memory triggers = new bytes[](workLength);
 
         // Populate call array with onchain work
@@ -200,8 +200,6 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             // Note that the value is zero here. The value is only used in performWork.
             calls[i] = IPoolExecutor.Call(true, workItem.checkGasLimit, 0, call);
             triggers[i] = checkData;
-            performGasLimits[i] = workItem.executionGasLimit;
-            values[i] = workItem.value;
         }
 
         // Perform multicall
@@ -211,8 +209,8 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         );
 
         // Extract results
-        workNeeded = new PerformWorkItem[](workLength);
-        uint256 amountOfWork = 0;
+        checkedWorkItems = new CheckedWorkItem[](workLength);
+        workRequiredCount = 0;
         for (uint256 i = 0; i < workLength; ++i) {
             bool needsWork = false;
             bytes memory workData = hex"";
@@ -242,6 +240,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             }
 
             if (needsWork) {
+                ++workRequiredCount;
                 // We need work. Now let's check if we need to change the work data.
                 if (checkParams.executionDataHandling == ExecutionDataHandling.NONE) {
                     workData = hex""; // Always no data
@@ -259,21 +258,17 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                     // Invalid option. Revert.
                     revert("InvalidPerformDataHandling"); // TODO: Custom revert
                 }
-
-                workNeeded[amountOfWork++] = PerformWorkItem({
-                    maxGasLimit: performGasLimits[i],
-                    value: values[i],
-                    index: i,
-                    itemHash: keccak256(abi.encode(checkParams.workItems[i])),
-                    trigger: triggers[i],
-                    executionData: workData
-                });
             }
-        }
 
-        // Trim the array to the actual amount of work needed
-        assembly {
-            mstore(workNeeded, amountOfWork)
+            checkedWorkItems[i] = CheckedWorkItem({
+                index: i,
+                itemHash: keccak256(abi.encode(checkParams.workItems[i])),
+                needsExecution: needsWork,
+                callWasSuccessful: results[i].success,
+                checkCallData: triggers[i],
+                callCallResult: results[i].returnData,
+                executionData: workData
+            });
         }
 
         workDefinition = WorkDefinition({checkParams: checkParams, executionParams: execParams});

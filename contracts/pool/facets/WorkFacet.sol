@@ -83,13 +83,13 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
 
         WorkCheckParams memory emptyWork = WorkCheckParams({
             target: address(0),
-            selector: 0,
             source: CheckWorkSource.NIL,
             offchainCheckDataHandling: OffchainCheckDataHandling.NIL,
             callResultInterpretation: CheckWorkCallResultInterpretation.NIL,
             executionDataHandling: ExecutionDataHandling.NIL,
             maxGasLimit: 0,
             executionDelay: 0,
+            selector: "",
             workItems: new WorkItem[](0)
         });
         WorkExecutionParams memory emptyExecParams = WorkExecutionParams({
@@ -352,7 +352,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
      *****************************************************************************************************************/
 
     function _containsDuplicates(WorkItem[] memory workItems) internal pure returns (bool, WorkItem memory) {
-        // TODO: Change the logic? There's now condition and performData
+        // TODO: Change the logic? There's now condition and executionData
         // TODO: Remove this? Can be expensive, and we can delegate the responsibility to UIs
 
         uint256 length = workItems.length;
@@ -400,7 +400,9 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
             revert("Invalid target address"); // TODO: Custom error
         }
 
-        if (checkParams.selector == 0) {
+        if (checkParams.selector.length == 0) {
+            // TODO: More validations
+
             revert("Invalid selector"); // TODO: Custom error
         }
 

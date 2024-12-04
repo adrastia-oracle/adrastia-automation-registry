@@ -11,6 +11,7 @@ import {
 import { WORKER } from "../src/roles";
 import { default as MockEnvironmentModule } from "../ignition/modules/mock-environment";
 import { AutomationPoolTypes } from "../typechain-types/contracts/pool/IAutomationPool";
+import { keccak256 } from "ethers";
 
 const BATCH_EXECUTION_ID = ethers.id(
     "BatchExecution(bytes32,address,address,uint8,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
@@ -177,7 +178,7 @@ async function main() {
     // Print JSON.stringify of performWork, providing a function to convert bigint to string
     console.log("Perform work: " + JSON.stringify(performWork, (_, v) => (typeof v === "bigint" ? v.toString() : v)));
 
-    const amountOfWork = Number(performWork[1].length);
+    const amountOfWork = Number(performWork.workRequiredCount);
 
     if (amountOfWork > 0) {
         console.log("Work available: " + amountOfWork + " items");
@@ -185,16 +186,23 @@ async function main() {
         // Assemble work data
         const workData: AutomationPoolTypes.PerformWorkItemStruct[] = [];
 
-        for (let i = 0; i < amountOfWork; ++i) {
-            const performWorkItem: AutomationPoolTypes.PerformWorkItemStructOutput = performWork[1][i];
+        for (let i = 0; i < performWork.checkedWorkItems.length; ++i) {
+            const checkedWorkItem: AutomationPoolTypes.CheckedWorkItemStructOutput = performWork.checkedWorkItems[i];
+
+            if (!checkedWorkItem.needsExecution) {
+                continue;
+            }
+
+            const workItem: AutomationPoolTypes.WorkItemStructOutput =
+                performWork.workDefinition.checkParams.workItems[checkedWorkItem.index];
 
             workData.push({
-                maxGasLimit: performWorkItem.maxGasLimit,
-                value: performWorkItem.value,
-                index: performWorkItem.index,
-                itemHash: performWorkItem.itemHash,
-                trigger: performWorkItem.trigger,
-                executionData: performWorkItem.executionData,
+                maxGasLimit: workItem.executionGasLimit,
+                value: workItem.value,
+                index: checkedWorkItem.index,
+                itemHash: checkedWorkItem.itemHash,
+                trigger: checkedWorkItem.checkCallData,
+                executionData: checkedWorkItem.executionData,
             });
         }
 

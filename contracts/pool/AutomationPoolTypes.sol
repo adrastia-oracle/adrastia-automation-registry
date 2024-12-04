@@ -45,6 +45,43 @@ interface AutomationPoolTypes {
         OffchainWorkItemData[] itemsData;
     }
 
+    struct CheckedWorkItem {
+        /**
+         * @notice The index of the work item in the batch.
+         */
+        uint256 index;
+
+        /**
+         * @notice The hash of the work item.
+         */
+        bytes32 itemHash;
+
+        /**
+         * @notice Whether the work item needs to be executed.
+         */
+        bool needsExecution;
+
+        /**
+         * @notice Whether the check call was successful.
+         */
+        bool callWasSuccessful;
+
+        /**
+         * @notice The calldata sent to the target contract.
+         */
+        bytes checkCallData;
+
+        /**
+         * @notice The result of the check call.
+         */
+        bytes callCallResult;
+
+        /**
+         * @notice The data to be sent to the target contract.
+         */
+        bytes executionData;
+    }
+
     struct PerformWorkItem {
         /**
          * @notice The maximum gas limit for the executor call.
@@ -73,9 +110,8 @@ interface AutomationPoolTypes {
     }
 
     struct WorkCheckParams {
-        // Slot 1: 224 bits
+        // Slot 1: 220 bits
         address target;
-        bytes4 selector;
         CheckWorkSource source;
         OffchainCheckDataHandling offchainCheckDataHandling;
         CheckWorkCallResultInterpretation callResultInterpretation;
@@ -89,13 +125,14 @@ interface AutomationPoolTypes {
          */
         uint16 executionDelay;
         // Slots 3+
+        bytes selector; // Function selector or event topics
         WorkItem[] workItems;
     }
 
     struct WorkExecutionParams {
         // Slot 1: 256 bits
         address target;
-        bytes4 selector;
+        bytes4 selector; // Function selector
         uint64 maxGasLimit; // In execution gas units for the executor call
         // Slot 2: 128 bits
         uint32 flags; // Bitmask. 1 bit is currently used
@@ -139,6 +176,7 @@ interface AutomationPoolTypes {
     enum CheckWorkSource {
         NIL,
         FUNCTION_CALL
+        // Future: EVENT_LOG
     }
 
     enum CheckWorkCallResultInterpretation {

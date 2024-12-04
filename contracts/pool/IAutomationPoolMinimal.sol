@@ -120,7 +120,7 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
     function checkWork(
         bytes32 batchId,
         OffchainDataProvision calldata offchainData
-    ) external returns (WorkDefinition memory workDefinition, PerformWorkItem[] memory workNeeded);
+    ) external returns (uint256 workRequiredCount, WorkDefinition memory workDefinition, CheckedWorkItem[] memory checkedWorkItems);
 
     function performWork(bytes32 batchId, PerformWorkItem[] calldata workData) external;
 

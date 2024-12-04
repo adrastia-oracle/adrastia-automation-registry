@@ -10,15 +10,15 @@ interface IWorkFacet is AutomationPoolTypes {
 
     event WorkCheckParamsUpdated(
         bytes32 indexed batchId,
-        WorkCheckParams oldWork,
-        WorkCheckParams newWork,
+        WorkCheckParams oldParams,
+        WorkCheckParams newParams,
         uint256 timestamp
     );
 
     event WorkExecutionParamsUpdated(
         bytes32 indexed batchId,
-        WorkExecutionParams oldWork,
-        WorkExecutionParams newWork,
+        WorkExecutionParams oldParams,
+        WorkExecutionParams newParams,
         uint256 timestamp
     );
 
