@@ -3,7 +3,7 @@ import { WorkFacet__factory } from "../../../typechain-types";
 import { default as PoolWorkFacetModule } from "../../../ignition/modules/pool-work-facet-module";
 import { ZeroAddress } from "ethers";
 
-const POOL_DIAMOND = "0xe642cDC36C3d612f2161aC0792e3afc7333B956c";
+const POOL_DIAMOND = "0x4a22152e8064bc77c6261c38cd1A88ee0788Dd3d";
 
 async function main() {
     // Deploy a new PoolWorkFacet

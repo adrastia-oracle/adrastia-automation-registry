@@ -193,7 +193,8 @@ interface AutomationPoolTypes {
         CHECK_RESULT_DATA_ONLY, // Result from the check call return data
         EXECUTION_DATA_ONLY, // workItem.executionData
         CHECK_DATA_ONLY, // Use the check data as the execution data
-        RAW_CHECK_DATA_ONLY // Use the raw check data as the execution data,
+        RAW_CHECK_DATA_ONLY, // Use the raw check data as the execution data,
+        ACI // AutomationCompatibleInterface
     }
 
     enum ExecutionError {

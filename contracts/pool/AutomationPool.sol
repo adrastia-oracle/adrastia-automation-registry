@@ -17,6 +17,7 @@ import {Roles} from "../access/Roles.sol";
 import {IDiamondLoupe} from "../diamond/interfaces/IDiamondLoupe.sol";
 import {IL1GasCalculator} from "../gas/IL1GasCalculator.sol";
 
+// TODO: ERC20 withdrawal event
 contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPoolBase {
     using SafeERC20 for IERC20;
 
@@ -224,10 +225,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             } else if (checkParams.callResultInterpretation == CheckWorkCallResultInterpretation.ACI) {
                 if (results[i].success) {
                     // Decode the result
-                    (needsWork, workData) = abi.decode(results[i].returnData, (bool, bytes));
-
-                    // Since in performWork, we concat the selector with the work data, we need to encode it here.
-                    workData = abi.encode(workData);
+                    needsWork = abi.decode(results[i].returnData, (bool));
                 }
             } else if (checkParams.callResultInterpretation == CheckWorkCallResultInterpretation.CONDITIONAL) {
                 if (results[i].success) {
@@ -254,6 +252,18 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                     workData = triggers[i];
                 } else if (checkParams.executionDataHandling == ExecutionDataHandling.RAW_CHECK_DATA_ONLY) {
                     workData = checkParams.workItems[i].executionData;
+                } else if (checkParams.executionDataHandling == ExecutionDataHandling.ACI) {
+                    if (results[i].success) {
+                        // Decode the result
+                        (, workData) = abi.decode(results[i].returnData, (bool, bytes));
+
+                        // Since in performWork, we concat the selector with the work data, we need to encode it here.
+                        workData = abi.encode(workData);
+                    } else {
+                        // The call failed so we're unable to get the data. This can happen if the call result
+                        // interpretation is set to something weird.
+                        revert("ACIFailed"); // TODO: Custom revert
+                    }
                 } else {
                     // Invalid option. Revert.
                     revert("InvalidPerformDataHandling"); // TODO: Custom revert

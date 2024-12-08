@@ -426,7 +426,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
 
         if (
             checkParams.executionDataHandling == ExecutionDataHandling.NIL ||
-            checkParams.executionDataHandling > ExecutionDataHandling.RAW_CHECK_DATA_ONLY
+            checkParams.executionDataHandling > ExecutionDataHandling.ACI
         ) {
             revert("Invalid perform data handling"); // TODO: Custom error
         }

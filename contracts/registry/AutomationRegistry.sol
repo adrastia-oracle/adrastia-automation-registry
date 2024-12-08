@@ -20,6 +20,7 @@ import {Roles} from "../access/Roles.sol";
 import {AutomationPoolTypes} from "../pool/AutomationPoolTypes.sol";
 import {IDiamondLoupe} from "../diamond/interfaces/IDiamondLoupe.sol";
 
+// TODO: Fund withdrawal event
 contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleManagement {
     using SafeERC20 for IERC20;
     using Math for uint256;

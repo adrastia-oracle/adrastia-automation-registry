@@ -11,6 +11,7 @@ import {IPoolExecutor} from "./IPoolExecutor.sol";
 import {IAutomationPoolMinimal} from "./IAutomationPoolMinimal.sol";
 import {Roles} from "../access/Roles.sol";
 
+// TODO: Allow the manager to execute arbitrary calls
 contract PoolExecutor is Initializable, IPoolExecutor {
     using SafeERC20 for IERC20;
 
