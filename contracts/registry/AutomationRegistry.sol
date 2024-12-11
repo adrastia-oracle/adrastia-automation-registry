@@ -614,6 +614,8 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         _authWithdrawNative();
 
         payable(to).transfer(amount);
+
+        emit NativeWithdrawn(msg.sender, to, amount, block.timestamp);
     }
 
     /******************************************************************************************************************

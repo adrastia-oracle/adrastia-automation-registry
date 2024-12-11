@@ -536,6 +536,8 @@ contract AutomationRegistryFactory is IAutomationRegistryFactory, Initializable,
         _authWithdrawNative();
 
         payable(to).transfer(amount);
+
+        emit NativeWithdrawn(msg.sender, to, amount, block.timestamp);
     }
 
     /******************************************************************************************************************

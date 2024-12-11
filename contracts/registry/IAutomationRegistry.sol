@@ -10,6 +10,8 @@ interface IAutomationRegistry {
 
     event Erc20Withdrawn(address indexed token, address indexed to, uint256 amount, uint256 timestamp);
 
+    event NativeWithdrawn(address indexed caller, address indexed to, uint256 amount, uint256 timestamp);
+
     function poolType() external view returns (uint16);
 
     function poolBeacon() external view returns (address);

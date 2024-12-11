@@ -10,6 +10,8 @@ interface IAutomationRegistryFactory {
 
     event Erc20Withdrawn(address indexed token, address indexed to, uint256 amount, uint256 timestamp);
 
+    event NativeWithdrawn(address indexed caller, address indexed to, uint256 amount, uint256 timestamp);
+
     /**
      * @notice Gets the protocol fee configuration.
      * @return poolCreationFee The fee collected from the registry for creating a pool, in basis points.
