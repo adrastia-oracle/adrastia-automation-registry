@@ -15,12 +15,6 @@ interface IPoolExecutor {
         uint256 gasUsed;
     }
 
-    /******************************************************************************************************************
-     * EVENTS - ERC20 WITHDRAWAL
-     *****************************************************************************************************************/
-
-    event Erc20Withdrawn(address indexed token, address indexed to, uint256 amount, uint256 timestamp);
-
     function withdrawNative(address to, uint256 amount) external;
 
     function withdrawErc20(address token, address to, uint256 amount) external;

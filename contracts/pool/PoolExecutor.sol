@@ -61,8 +61,6 @@ contract PoolExecutor is Initializable, IPoolExecutor {
         uint256 amount
     ) external virtual onlyRoleFromPool(Roles.POOL_MANAGER) whenNoPoolDebt {
         IERC20(token).safeTransfer(to, amount);
-
-        emit Erc20Withdrawn(token, to, amount, block.timestamp);
     }
 
     /// @notice Aggregate calls with a msg value
