@@ -38,6 +38,12 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
     );
 
     /******************************************************************************************************************
+     * EVENTS - ERC20 WITHDRAWAL
+     *****************************************************************************************************************/
+
+    event Erc20Withdrawn(address indexed token, address indexed to, uint256 amount, uint256 timestamp);
+
+    /******************************************************************************************************************
      * EVENTS - EXECUTION
      *****************************************************************************************************************/
 
@@ -120,7 +126,13 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
     function checkWork(
         bytes32 batchId,
         OffchainDataProvision calldata offchainData
-    ) external returns (uint256 workRequiredCount, WorkDefinition memory workDefinition, CheckedWorkItem[] memory checkedWorkItems);
+    )
+        external
+        returns (
+            uint256 workRequiredCount,
+            WorkDefinition memory workDefinition,
+            CheckedWorkItem[] memory checkedWorkItems
+        );
 
     function performWork(bytes32 batchId, PerformWorkItem[] calldata workData) external;
 

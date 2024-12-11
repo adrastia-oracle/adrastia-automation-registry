@@ -4,6 +4,12 @@ pragma solidity ^0.8.0;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IAutomationRegistryFactory {
+    /******************************************************************************************************************
+     * EVENTS - ERC20 WITHDRAWAL
+     *****************************************************************************************************************/
+
+    event Erc20Withdrawn(address indexed token, address indexed to, uint256 amount, uint256 timestamp);
+
     /**
      * @notice Gets the protocol fee configuration.
      * @return poolCreationFee The fee collected from the registry for creating a pool, in basis points.

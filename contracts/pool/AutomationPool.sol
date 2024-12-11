@@ -137,7 +137,11 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         nonReentrant
         whenOpen
         whenNotInDebt
-        returns (uint256 workRequiredCount, WorkDefinition memory workDefinition, CheckedWorkItem[] memory checkedWorkItems)
+        returns (
+            uint256 workRequiredCount,
+            WorkDefinition memory workDefinition,
+            CheckedWorkItem[] memory checkedWorkItems
+        )
     {
         _authCheckWork();
 
@@ -586,6 +590,8 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         _authWithdrawErc20();
 
         IERC20(token).safeTransfer(to, amount);
+
+        emit Erc20Withdrawn(token, to, amount, block.timestamp);
     }
 
     function closePool() external virtual override nonReentrant {

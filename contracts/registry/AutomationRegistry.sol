@@ -606,6 +606,8 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         _authWithdrawErc20();
 
         IERC20(token).safeTransfer(to, amount);
+
+        emit Erc20Withdrawn(token, to, amount, block.timestamp);
     }
 
     function withdrawNative(address to, uint256 amount) external virtual {

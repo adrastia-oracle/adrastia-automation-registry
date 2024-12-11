@@ -4,6 +4,12 @@ pragma solidity ^0.8.0;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IAutomationRegistry {
+    /******************************************************************************************************************
+     * EVENTS - ERC20 WITHDRAWAL
+     *****************************************************************************************************************/
+
+    event Erc20Withdrawn(address indexed token, address indexed to, uint256 amount, uint256 timestamp);
+
     function poolType() external view returns (uint16);
 
     function poolBeacon() external view returns (address);
@@ -21,7 +27,10 @@ interface IAutomationRegistry {
      * @return executionGasLimit The maximum gas limit to perform work.
      * @return minBalance The minimum balance required to execute the automation.
      */
-    function poolRestrictions() external view returns (uint64 checkGasLimit, uint64 executionGasLimit, uint96 minBalance);
+    function poolRestrictions()
+        external
+        view
+        returns (uint64 checkGasLimit, uint64 executionGasLimit, uint96 minBalance);
 
     function feeConfig()
         external
