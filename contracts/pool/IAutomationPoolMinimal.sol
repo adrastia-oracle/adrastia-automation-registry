@@ -41,7 +41,13 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
      * EVENTS - ERC20 WITHDRAWAL
      *****************************************************************************************************************/
 
-    event Erc20Withdrawn(address indexed token, address indexed to, uint256 amount, uint256 timestamp);
+    event Erc20Withdrawn(
+        address indexed caller,
+        address indexed token,
+        address indexed to,
+        uint256 amount,
+        uint256 timestamp
+    );
 
     /******************************************************************************************************************
      * EVENTS - EXECUTION
