@@ -505,7 +505,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             revert CannotDepositNothing();
         }
 
-        emit GasFundsMoved(msg.sender, GasFundMovement.DEPOSIT, msg.value, block.timestamp);
+        emit GasFundsMoved(msg.sender, address(this), GasFundMovement.DEPOSIT, msg.value, block.timestamp);
 
         uint256 oldTotalGasDebt = _totalGasDebt;
         if (oldTotalGasDebt > 0) {
@@ -575,7 +575,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                 revert FailedToWithdrawGasFunds(amount);
             }
 
-            emit GasFundsMoved(to, GasFundMovement.WITHDRAW, amount, block.timestamp);
+            emit GasFundsMoved(msg.sender, to, GasFundMovement.WITHDRAW, amount, block.timestamp);
         } else {
             // No funds to withdraw
             revert FailedToWithdrawGasFunds(amount);
@@ -591,7 +591,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
         IERC20(token).safeTransfer(to, amount);
 
-        emit Erc20Withdrawn(token, to, amount, block.timestamp);
+        emit Erc20Withdrawn(msg.sender, token, to, amount, block.timestamp);
     }
 
     function closePool() external virtual override nonReentrant {

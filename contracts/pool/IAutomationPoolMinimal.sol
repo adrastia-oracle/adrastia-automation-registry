@@ -27,7 +27,13 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
      * EVENTS - GAS
      *****************************************************************************************************************/
 
-    event GasFundsMoved(address indexed party, GasFundMovement action, uint256 amount, uint256 timestamp);
+    event GasFundsMoved(
+        address indexed caller,
+        address indexed to,
+        GasFundMovement action,
+        uint256 amount,
+        uint256 timestamp
+    );
 
     event GasDebtUpdated(
         address indexed party,
