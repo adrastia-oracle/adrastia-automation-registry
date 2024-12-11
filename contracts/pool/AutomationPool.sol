@@ -251,7 +251,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                 } else if (checkParams.executionDataHandling == ExecutionDataHandling.CHECK_DATA_ONLY) {
                     workData = triggers[i];
                 } else if (checkParams.executionDataHandling == ExecutionDataHandling.RAW_CHECK_DATA_ONLY) {
-                    workData = checkParams.workItems[i].executionData;
+                    workData = checkParams.workItems[i].checkData;
                 } else if (checkParams.executionDataHandling == ExecutionDataHandling.ACI) {
                     if (results[i].success) {
                         // Decode the result
@@ -635,13 +635,19 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
      *****************************************************************************************************************/
 
     function _checkCondition(bytes memory returnData, bytes memory condition) internal virtual returns (bool) {
-        uint256 condVersion = abi.decode(condition, (uint256));
+        uint256 condVersionAndOp = abi.decode(condition, (uint256));
+
+        // The version is stored in the first 32 bits
+        uint256 condVersion = condVersionAndOp >> 224;
 
         if (condVersion == 1) {
             // Simple conditions
 
-            // Decode the condition
-            (, Operator operator, uint256 operandR) = abi.decode(condition, (uint256, Operator, uint256));
+            // Extract the operator which is stored in the second 16 bits (after the version)
+            Operator operator = Operator((condVersionAndOp >> 208) & 0xFFFF);
+
+            // Decode the operand from the condition
+            (, uint256 operandR) = abi.decode(condition, (uint256, uint256));
 
             // Decode the return data
             uint256 operandL = abi.decode(returnData, (uint256));
