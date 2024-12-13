@@ -147,7 +147,7 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
             CheckedWorkItem[] memory checkedWorkItems
         );
 
-    function performWork(bytes32 batchId, PerformWorkItem[] calldata workData) external;
+    function performWork(bytes32 batchId, uint256 flags, PerformWorkItem[] calldata workData) external;
 
     function withdrawErc20(address token, address to, uint256 amount) external;
 }

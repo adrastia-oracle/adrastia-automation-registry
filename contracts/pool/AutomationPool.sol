@@ -301,6 +301,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
     function performWork(
         bytes32 batchId,
+        uint256 flags, // Currently unused. Reserved for future use.
         PerformWorkItem[] calldata workData
     ) external virtual override nonReentrant whenNotClosed {
         // whenNotClosed is used to allow work to be closed up until the closing time, as a mechanism to prevent the

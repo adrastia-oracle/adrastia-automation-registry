@@ -50,32 +50,26 @@ interface AutomationPoolTypes {
          * @notice The index of the work item in the batch.
          */
         uint256 index;
-
         /**
          * @notice The hash of the work item.
          */
         bytes32 itemHash;
-
         /**
          * @notice Whether the work item needs to be executed.
          */
         bool needsExecution;
-
         /**
          * @notice Whether the check call was successful.
          */
         bool callWasSuccessful;
-
         /**
          * @notice The calldata sent to the target contract.
          */
         bytes checkCallData;
-
         /**
          * @notice The result of the check call.
          */
         bytes callCallResult;
-
         /**
          * @notice The data to be sent to the target contract.
          */
@@ -95,6 +89,10 @@ interface AutomationPoolTypes {
          * @notice If work item execution is aggregated, this is the number of work items. Otherwise, this should be 1.
          */
         uint16 aggregateCount;
+        /**
+         * @notice Bitflags specific to the work item. Currently unused.
+         */
+        uint32 flags;
         /**
          * @notice The index of the work item in the batch.
          */
