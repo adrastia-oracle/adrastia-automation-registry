@@ -128,6 +128,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
     function checkWork(
         bytes32 batchId,
+        uint256 flags, // Currently unused. Reserved for future use.
         OffchainDataProvision calldata offchainData
     )
         external

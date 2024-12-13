@@ -138,6 +138,7 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
 
     function checkWork(
         bytes32 batchId,
+        uint256 flags,
         OffchainDataProvision calldata offchainData
     )
         external

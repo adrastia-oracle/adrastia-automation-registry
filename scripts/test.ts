@@ -176,7 +176,7 @@ async function main() {
     };
 
     // Worker - Check for work
-    const performWork: any = await pool.connect(worker).checkWork.staticCallResult(batchId, offchainData);
+    const performWork: any = await pool.connect(worker).checkWork.staticCallResult(batchId, 0, offchainData);
 
     // Print JSON.stringify of performWork, providing a function to convert bigint to string
     console.log("Perform work: " + JSON.stringify(performWork, (_, v) => (typeof v === "bigint" ? v.toString() : v)));
