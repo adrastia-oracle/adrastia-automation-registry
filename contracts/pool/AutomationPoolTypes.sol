@@ -92,6 +92,10 @@ interface AutomationPoolTypes {
          */
         uint128 value;
         /**
+         * @notice If work item execution is aggregated, this is the number of work items. Otherwise, this should be 1.
+         */
+        uint16 aggregateCount;
+        /**
          * @notice The index of the work item in the batch.
          */
         uint256 index;

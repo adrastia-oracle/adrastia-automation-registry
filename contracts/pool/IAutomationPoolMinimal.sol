@@ -63,6 +63,7 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
         bytes32 indexed batchId,
         address indexed target,
         address indexed worker,
+        uint256 aggregateCount,
         Result result,
         bytes trigger,
         uint256 gasUsed,

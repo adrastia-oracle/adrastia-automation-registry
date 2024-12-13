@@ -347,78 +347,89 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         uint256 numFailures = 0;
         uint256 numSkipped = 0;
 
-        // Only proceed if there's not an error
-        if (pError == ExecutionError.NONE) {
-            // Determine call array size, if allowed to proceed
+        {
             uint256 workLength = workData.length;
 
-            if (workLength >= execParams.minBatchSize && workLength <= execParams.maxBatchSize) {
-                // Create call array
-                IPoolExecutor.Call[] memory calls = new IPoolExecutor.Call[](workLength);
+            // Count aggregate work items
+            uint256 aggregateWorkItemCount = 0;
+            for (uint256 i = 0; i < workLength; ++i) {
+                aggregateWorkItemCount += workData[i].aggregateCount;
+            }
 
-                // Populate call array
-                for (uint256 i = 0; i < workLength; ++i) {
-                    PerformWorkItem memory workItem = workData[i];
-                    bytes memory call = bytes.concat(execParams.selector, workItem.executionData);
+            // Only proceed if there's not an error
+            if (pError == ExecutionError.NONE) {
+                if (workLength >= execParams.minBatchSize && workLength <= execParams.maxBatchSize) {
+                    // Create call array
+                    IPoolExecutor.Call[] memory calls = new IPoolExecutor.Call[](workLength);
 
-                    calls[i] = IPoolExecutor.Call(true, workItem.maxGasLimit, workItem.value, call);
-                }
-
-                // Create results array
-                IPoolExecutor.Result[] memory results;
-
-                // Execute the work
-                try
-                    IPoolExecutor(executor).aggregateCalls{gas: execParams.maxGasLimit}(execParams.target, calls)
-                returns (IPoolExecutor.Result[] memory _results) {
-                    results = _results;
-                    success = true;
-                } catch {
-                    // Failed to perform work
-                }
-
-                if (success) {
-                    // Check results
+                    // Populate call array
                     for (uint256 i = 0; i < workLength; ++i) {
-                        if (results[i].success) {
-                            ++numSuccess;
+                        PerformWorkItem memory workItem = workData[i];
+                        bytes memory call = bytes.concat(execParams.selector, workItem.executionData);
 
-                            emit WorkItemExecution(
-                                batchId,
-                                execParams.target,
-                                msg.sender,
-                                Result.SUCCESS,
-                                workData[i].trigger,
-                                results[i].gasUsed,
-                                block.timestamp
-                            );
-                        } else {
-                            ++numFailures;
+                        calls[i] = IPoolExecutor.Call(true, workItem.maxGasLimit, workItem.value, call);
+                    }
 
-                            emit WorkItemExecution(
-                                batchId,
-                                execParams.target,
-                                msg.sender,
-                                Result.FAILURE,
-                                workData[i].trigger,
-                                results[i].gasUsed,
-                                block.timestamp
-                            );
+                    // Create results array
+                    IPoolExecutor.Result[] memory results;
+
+                    // Execute the work
+                    try
+                        IPoolExecutor(executor).aggregateCalls{gas: execParams.maxGasLimit}(execParams.target, calls)
+                    returns (IPoolExecutor.Result[] memory _results) {
+                        results = _results;
+                        success = true;
+                    } catch {
+                        // Failed to perform work
+                    }
+
+                    if (success) {
+                        // Check results
+                        for (uint256 i = 0; i < workLength; ++i) {
+                            uint256 aggregateCount = workData[i].aggregateCount;
+
+                            if (results[i].success) {
+                                numSuccess += aggregateCount;
+
+                                emit WorkItemExecution(
+                                    batchId,
+                                    execParams.target,
+                                    msg.sender,
+                                    aggregateCount,
+                                    Result.SUCCESS,
+                                    workData[i].trigger,
+                                    results[i].gasUsed,
+                                    block.timestamp
+                                );
+                            } else {
+                                numFailures += aggregateCount;
+
+                                emit WorkItemExecution(
+                                    batchId,
+                                    execParams.target,
+                                    msg.sender,
+                                    aggregateCount,
+                                    Result.FAILURE,
+                                    workData[i].trigger,
+                                    results[i].gasUsed,
+                                    block.timestamp
+                                );
+                            }
                         }
+                    } else {
+                        // Executor reverted, skipping all work
+                        numSkipped = aggregateWorkItemCount;
                     }
                 } else {
-                    // Executor reverted, skipping all work
-                    numSkipped = workLength;
+                    // Skipping all work
+                    numSkipped = aggregateWorkItemCount;
                 }
             } else {
                 // Skipping all work
-                numSkipped = workLength;
-            }
-        } else {
-            // Skipping all work
-            numSkipped = workData.length;
+                numSkipped = aggregateWorkItemCount;
 
-            emit ExecutionRestricted(batchId, pError, block.timestamp);
+                emit ExecutionRestricted(batchId, pError, block.timestamp);
+            }
         }
 
         // Calculate gas compensation
