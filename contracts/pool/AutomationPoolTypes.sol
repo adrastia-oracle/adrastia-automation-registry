@@ -212,6 +212,7 @@ interface AutomationPoolTypes {
         GT, // Greater than
         GTE, // Greater than or equal
         LT, // Less than
-        LTE // Less than or equal
+        LTE, // Less than or equal
+        BTW // Between (inclusive), special 3-operand operator
     }
 }

@@ -664,8 +664,16 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             // Extract the operator which is stored in the second 16 bits (after the version)
             Operator operator = Operator((condVersionAndOp >> 208) & 0xFFFF);
 
+            uint256 operandR;
+            uint256 operandR2; // Used for 3-operand operators
+
             // Decode the operand from the condition
-            (, uint256 operandR) = abi.decode(condition, (uint256, uint256));
+            if (operator == Operator.BTW) {
+                // 3-operand operator
+                (, operandR, operandR2) = abi.decode(condition, (uint256, uint256, uint256));
+            } else {
+                (, operandR) = abi.decode(condition, (uint256, uint256));
+            }
 
             // Decode the return data
             uint256 operandL = abi.decode(returnData, (uint256));
@@ -683,6 +691,8 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                 return operandL > operandR;
             } else if (operator == Operator.GTE) {
                 return operandL >= operandR;
+            } else if (operator == Operator.BTW) {
+                return operandL >= operandR && operandL <= operandR2;
             } else {
                 // Invalid operator
                 revert("InvalidOperator"); // TODO: Custom revert
