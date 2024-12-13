@@ -17,7 +17,6 @@ import {Roles} from "../access/Roles.sol";
 import {IDiamondLoupe} from "../diamond/interfaces/IDiamondLoupe.sol";
 import {IL1GasCalculator} from "../gas/IL1GasCalculator.sol";
 
-// TODO: ERC20 withdrawal event
 contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPoolBase {
     using SafeERC20 for IERC20;
 
