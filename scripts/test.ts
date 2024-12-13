@@ -17,7 +17,9 @@ const BATCH_EXECUTION_ID = ethers.id(
     "BatchExecution(bytes32,address,address,uint8,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
 );
 
-const WORK_ITEM_EXECUTION_ID = ethers.id("WorkItemExecution(bytes32,address,address,uint8,bytes,uint256,uint256)");
+const WORK_ITEM_EXECUTION_ID = ethers.id(
+    "WorkItemExecution(bytes32,address,address,uint256,uint8,bytes,uint256,uint256)",
+);
 
 const POOL_WORK_PERFORMED_ID = ethers.id(
     "PoolWorkPerformed(uint256,address,address,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
@@ -55,6 +57,7 @@ const EXECUTION_DATA_HANDLING = {
     EXECUTION_DATA_ONLY: 3,
     CHECK_DATA_ONLY: 4,
     RAW_CHECK_DATA_ONLY: 5,
+    ACI: 6,
 };
 
 const CHECK_UPKEEP_SELECTOR = ethers.id("checkUpkeep(bytes)").slice(0, 10);
@@ -141,7 +144,7 @@ async function main() {
         source: CHECK_WORK_SOURCE.FUNCTION_CALL,
         offchainCheckDataHandling: OFFCHAIN_CHECK_DATA_HANDLING.IGNORE,
         callResultInterpretation: CHECK_WORK_CALL_RESULT_INTERPRETATION.ACI,
-        executionDataHandling: EXECUTION_DATA_HANDLING.CHECK_RESULT_DATA_ONLY,
+        executionDataHandling: EXECUTION_DATA_HANDLING.ACI,
         maxGasLimit: checkGasLimit,
         executionDelay: 0,
         workItems: [workItem1],
@@ -194,11 +197,13 @@ async function main() {
             }
 
             const workItem: AutomationPoolTypes.WorkItemStructOutput =
-                performWork.workDefinition.checkParams.workItems[checkedWorkItem.index];
+                performWork.workDefinition.checkParams.workItems[Number(checkedWorkItem.index)];
 
             workData.push({
                 maxGasLimit: workItem.executionGasLimit,
                 value: workItem.value,
+                aggregateCount: 1,
+                flags: 0,
                 index: checkedWorkItem.index,
                 itemHash: checkedWorkItem.itemHash,
                 trigger: checkedWorkItem.checkCallData,
@@ -210,7 +215,7 @@ async function main() {
         console.log("Work data: ", workData);
 
         // Worker - Do work
-        const doWorkTx = await pool.connect(worker).performWork(batchId, workData);
+        const doWorkTx = await pool.connect(worker).performWork(batchId, 0, workData);
         const workReceipt = await doWorkTx.wait();
         if (!workReceipt) {
             throw new Error("No work receipt");
@@ -271,18 +276,24 @@ async function main() {
 
         // Report failures
         const failureEvents = workItemExecutionEvents.filter((event) => {
-            const decoded = AbiCoder.defaultAbiCoder().decode(["uint8", "bytes", "uint256", "uint256"], event.data);
+            const decoded = AbiCoder.defaultAbiCoder().decode(
+                ["uint256", "uint8", "bytes", "uint256", "uint256"],
+                event.data,
+            );
 
-            return decoded[0] === BigInt(EXECUTION_RESULT.FAILURE);
+            return decoded[1] === BigInt(EXECUTION_RESULT.FAILURE);
         });
 
         console.log(" - Failures: " + failureEvents.length);
 
         // Report successes
         const successEvents = workItemExecutionEvents.filter((event) => {
-            const decoded = AbiCoder.defaultAbiCoder().decode(["uint8", "bytes", "uint256", "uint256"], event.data);
+            const decoded = AbiCoder.defaultAbiCoder().decode(
+                ["uint256", "uint8", "bytes", "uint256", "uint256"],
+                event.data,
+            );
 
-            return decoded[0] === BigInt(EXECUTION_RESULT.SUCCESS);
+            return decoded[1] === BigInt(EXECUTION_RESULT.SUCCESS);
         });
 
         console.log(" - Successes: " + successEvents.length);
