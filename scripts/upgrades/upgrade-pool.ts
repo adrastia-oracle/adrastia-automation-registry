@@ -1,11 +1,10 @@
 import { ethers, ignition } from "hardhat";
 import PoolImplementationModule from "../../ignition/modules/pool-implementation";
-import ProtocolModule from "../../ignition/modules/protocol-module";
 
 async function main() {
     // Deploy a new PoolWorkFacet
     const { poolImplementation } = await ignition.deploy(PoolImplementationModule, {
-        deploymentId: "PoolImplementation3",
+        deploymentId: "PoolImplementation2",
     });
     const implementationAddress = poolImplementation.target;
 
@@ -13,7 +12,7 @@ async function main() {
 
     const registryFactory = await ethers.getContractAt(
         "AutomationRegistryFactory",
-        "0x65E55c7E139b64CA6ea268a346A25678564D4F21",
+        "0x5F578288B772b29FC91C957B9351D08Fbc925A14",
     );
 
     const beacon = await ethers.getContractAt("UpgradeableBeacon", await registryFactory.poolBeacon());
