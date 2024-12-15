@@ -437,8 +437,6 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
                 return(0, returndatasize())
             }
         }
-
-        // TODO: Ensure that we don't accept payment when calling non-payable functions
     }
 
     function name() external view virtual returns (string memory) {

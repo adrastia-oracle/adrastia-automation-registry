@@ -108,8 +108,6 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                 return(0, returndatasize())
             }
         }
-
-        // TODO: Ensure that we don't accept payment when calling non-payable functions
     }
 
     function isBatchActive(bytes32 batchId) external view virtual override returns (bool) {
