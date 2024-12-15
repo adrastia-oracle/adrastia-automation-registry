@@ -143,6 +143,8 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
     {
         _authCheckWork();
 
+        flags; // Silence unused variable warning
+
         // Fetch check and execution params
         WorkCheckParams memory checkParams = _checkParams[batchId];
         WorkExecutionParams memory execParams = _executionParams[batchId];
@@ -304,6 +306,8 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
     ) external virtual override nonReentrant whenNotClosed {
         // whenNotClosed is used to allow work to be closed up until the closing time, as a mechanism to prevent the
         // manager from causing the worker to waste gas.
+
+        flags; // Silence unused variable warning
 
         PerformWorkGasData memory gasData;
 
