@@ -35,12 +35,12 @@ interface IAutomationRegistry {
      * @return executionGasLimit The maximum gas limit to perform work.
      * @return minBalance The minimum balance required to execute the automation.
      */
-    function poolRestrictions()
+    function getPoolRestrictions()
         external
         view
         returns (uint64 checkGasLimit, uint64 executionGasLimit, uint96 minBalance);
 
-    function feeConfig()
+    function getFeeConfig()
         external
         view
         returns (

@@ -41,7 +41,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
 
         // Fetch pool restrictions
         (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(registry)
-            .poolRestrictions();
+            .getPoolRestrictions();
 
         // Validate params
         _validateCheckParams(batchId, work.checkParams, registryCheckGasLimit, true);
@@ -129,7 +129,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
 
         // Fetch pool restrictions
         (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(registry)
-            .poolRestrictions();
+            .getPoolRestrictions();
 
         // Validate params
         _validateCheckParams(batchId, newWork.checkParams, registryCheckGasLimit, true);
@@ -185,7 +185,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
 
         // Fetch pool restrictions
         (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(registry)
-            .poolRestrictions();
+            .getPoolRestrictions();
 
         _validateCheckParams(batchId, checkParams, registryCheckGasLimit, true);
         // We don't change the execution params here, but we validate them to ensure we're still valid
@@ -233,7 +233,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
         checkParams.workItems[index] = workItem;
 
         (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(registry)
-            .poolRestrictions();
+            .getPoolRestrictions();
 
         _validateCheckParams(batchId, checkParams, registryCheckGasLimit, true);
         // We don't change the execution params here, but we validate them to ensure we're still valid
@@ -296,7 +296,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
 
         // Fetch pool restrictions
         (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(registry)
-            .poolRestrictions();
+            .getPoolRestrictions();
 
         // Validate params to ensure we're still valid
         _validateCheckParams(batchId, checkParams, registryCheckGasLimit, false);
@@ -366,7 +366,14 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
 
         return (
             false,
-            WorkItem({checkGasLimit: 0, executionGasLimit: 0, value: 0, condition: "", checkData: "", executionData: ""})
+            WorkItem({
+                checkGasLimit: 0,
+                executionGasLimit: 0,
+                value: 0,
+                condition: "",
+                checkData: "",
+                executionData: ""
+            })
         );
     }
 

@@ -493,7 +493,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         if (feePaid > 0) {
             address factory_ = factory;
 
-            (uint16 protocolPoolCreationFee, , ) = IAutomationRegistryFactory(factory_).feeConfig();
+            (uint16 protocolPoolCreationFee, , ) = IAutomationRegistryFactory(factory_).getFeeConfig();
 
             // Calculate protocol fee, rounding up
             uint256 protocolFee = (feePaid * protocolPoolCreationFee).ceilDiv(10000);
@@ -560,7 +560,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         return _suggestedBatch;
     }
 
-    function poolRestrictions()
+    function getPoolRestrictions()
         external
         view
         virtual
@@ -570,7 +570,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         return (_gasConfig.checkGasLimit, _gasConfig.executionGasLimit, _gasConfig.minBalance);
     }
 
-    function feeConfig()
+    function getFeeConfig()
         external
         view
         virtual
@@ -642,7 +642,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
 
         address factory_ = factory;
 
-        (, uint16 protocolMaintenanceFee, ) = IAutomationRegistryFactory(factory_).feeConfig();
+        (, uint16 protocolMaintenanceFee, ) = IAutomationRegistryFactory(factory_).getFeeConfig();
 
         // Calculate protocol fee, rounding up
         uint256 protocolFee = (amount * protocolMaintenanceFee).ceilDiv(10000);
@@ -687,7 +687,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
 
         address factory_ = factory;
 
-        (, , uint16 workFee) = IAutomationRegistryFactory(factory_).feeConfig();
+        (, , uint16 workFee) = IAutomationRegistryFactory(factory_).getFeeConfig();
 
         // Calculate the protocol fee, rounding up
         uint256 protocolFee = (registryFee * workFee).ceilDiv(10000);
@@ -732,7 +732,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
 
         address factory_ = factory;
 
-        (, , uint16 workFee) = IAutomationRegistryFactory(factory_).feeConfig();
+        (, , uint16 workFee) = IAutomationRegistryFactory(factory_).getFeeConfig();
 
         // Calculate the protocol fee, rounding up
         uint256 protocolFee = (registryDebt * workFee).ceilDiv(10000);
@@ -820,7 +820,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
             uint32 maxGracePeriod,
             uint32 minClosingPeriod,
             uint32 maxClosingPeriod
-        ) = IAutomationRegistryFactory(factory).registryBillingRestrictions();
+        ) = IAutomationRegistryFactory(factory).getRegistryBillingRestrictions();
         if (newConfig.maintenanceInterval < minMaintenanceInterval) {
             revert MaintenanceIntervalTooLow(minMaintenanceInterval, newConfig.maintenanceInterval);
         }
@@ -852,7 +852,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
             uint96 maxPoolCreationFee,
             uint96 minMaintenanceFeePerDay,
             uint96 maxMaintenanceFeePerDay
-        ) = IAutomationRegistryFactory(factory).billingTokenRestrictions(newConfig.billingToken);
+        ) = IAutomationRegistryFactory(factory).getBillingTokenRestrictions(newConfig.billingToken);
         if (newConfig.poolCreationFee < minPoolCreationFee) {
             revert PoolCreationFeeTooLow(minPoolCreationFee, newConfig.poolCreationFee);
         }
@@ -889,7 +889,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
             uint96 maxMinBalance,
             uint16 minWorkFee,
             uint16 maxWorkFee
-        ) = IAutomationRegistryFactory(factory).registryRestrictions();
+        ) = IAutomationRegistryFactory(factory).getRegistryRestrictions();
         if (newConfig.gasPricePremium < minGasPricePremium) {
             revert GasPricePremiumTooLow(minGasPricePremium, newConfig.gasPricePremium);
         }

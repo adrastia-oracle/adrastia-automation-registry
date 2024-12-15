@@ -398,7 +398,7 @@ contract AutomationRegistryFactory is IAutomationRegistryFactory, Initializable,
         _setL1GasCalculatorValidity(calculator, isValid);
     }
 
-    function feeConfig()
+    function getFeeConfig()
         external
         view
         virtual
@@ -410,7 +410,7 @@ contract AutomationRegistryFactory is IAutomationRegistryFactory, Initializable,
         return (config.poolCreationFee, config.maintenanceFee, config.workFee);
     }
 
-    function registryRestrictions()
+    function getRegistryRestrictions()
         external
         view
         virtual
@@ -436,7 +436,7 @@ contract AutomationRegistryFactory is IAutomationRegistryFactory, Initializable,
         );
     }
 
-    function registryBillingRestrictions()
+    function getRegistryBillingRestrictions()
         external
         view
         virtual
@@ -465,7 +465,7 @@ contract AutomationRegistryFactory is IAutomationRegistryFactory, Initializable,
         );
     }
 
-    function billingTokenRestrictions(
+    function getBillingTokenRestrictions(
         address token
     )
         external

@@ -35,9 +35,6 @@ interface IWorkFacet is AutomationPoolTypes {
 
     error BatchAlreadyExists(bytes32 batchId);
 
-    // TODO: Unused
-    error InvalidBatchExecutionLimit(uint16 limit);
-
     error BillingCapacityExceeded(uint256 capacity, uint256 paidCapacity);
 
     error DuplicateWork(bytes32 batchId, WorkItem work);

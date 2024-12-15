@@ -134,7 +134,7 @@ contract BillingFacet is IBillingFacet, AutomationPoolBase {
             if (remainingBillingTime_ == 0) {
                 // Not in an active billing cycle. Get the billing token from the registry.
 
-                (address billingToken_, , , , , ) = IAutomationRegistry(registry).feeConfig();
+                (address billingToken_, , , , , ) = IAutomationRegistry(registry).getFeeConfig();
 
                 billingToken = IERC20(billingToken_);
             } else {
@@ -302,7 +302,7 @@ contract BillingFacet is IBillingFacet, AutomationPoolBase {
             uint32 maintenanceInterval,
             uint32 gracePeriod_,
             uint32 closingPeriod_
-        ) = IAutomationRegistry(registry).feeConfig();
+        ) = IAutomationRegistry(registry).getFeeConfig();
 
         billingToken = IERC20(billingToken_);
         maintenanceFee = maintenanceFee_;
@@ -372,7 +372,7 @@ contract BillingFacet is IBillingFacet, AutomationPoolBase {
             uint32 maintenanceInterval_,
             uint32 gracePeriod_,
             uint32 closingPeriod_
-        ) = IAutomationRegistry(registry_).feeConfig();
+        ) = IAutomationRegistry(registry_).getFeeConfig();
 
         // Calculate the additional maintenance fee for this billing cycle, pro rata.
         uint256 lastBillingTime = billing.lastBillingTime;

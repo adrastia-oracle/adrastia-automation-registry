@@ -24,9 +24,9 @@ interface IAutomationRegistryFactory {
      * @return maintenanceFee The fee collected from the registry for maintenance, in basis points.
      * @return workFee The fee collected from the registry for performing work, in basis points.
      */
-    function feeConfig() external view returns (uint16 poolCreationFee, uint16 maintenanceFee, uint16 workFee);
+    function getFeeConfig() external view returns (uint16 poolCreationFee, uint16 maintenanceFee, uint16 workFee);
 
-    function registryRestrictions()
+    function getRegistryRestrictions()
         external
         view
         returns (
@@ -38,7 +38,7 @@ interface IAutomationRegistryFactory {
             uint16 maxWorkFee
         );
 
-    function registryBillingRestrictions()
+    function getRegistryBillingRestrictions()
         external
         view
         returns (
@@ -50,7 +50,7 @@ interface IAutomationRegistryFactory {
             uint32 maxClosingPeriod
         );
 
-    function billingTokenRestrictions(
+    function getBillingTokenRestrictions(
         address token
     )
         external
