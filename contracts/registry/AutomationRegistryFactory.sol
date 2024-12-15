@@ -226,10 +226,6 @@ contract AutomationRegistryFactory is IAutomationRegistryFactory, Initializable,
      * ERRORS
      *****************************************************************************************************************/
 
-    error NotAnAdmin(address account);
-
-    error ProtocolAdminDoesntHaveRole(bytes32 role);
-
     error FeeConfigNotChanged();
 
     error RegistryRestrictionsNotChanged();

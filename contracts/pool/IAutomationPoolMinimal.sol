@@ -106,8 +106,6 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
 
     error GasPriceExceedsLimit(bytes32 batchId, uint256 gasPrice, uint256 maxGasPrice);
 
-    error CallerMustBeRegistry(address account);
-
     error FailedToCompensateWorker(address worker, uint256 amount);
 
     error FailedToWithdrawGasFunds(uint256 amount);

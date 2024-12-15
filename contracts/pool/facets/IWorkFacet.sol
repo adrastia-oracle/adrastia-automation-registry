@@ -28,14 +28,14 @@ interface IWorkFacet is AutomationPoolTypes {
      * ERRORS
      *****************************************************************************************************************/
 
-    error AggregateCheckGasLimitExceeded(bytes32 batchId, uint64 gasLimit, uint256 aggregateGasLimit);
-
+    // TODO: Unused
     error WorkItemExecutionGasLimitExceeded(bytes32 batchId, uint64 gasLimit, uint64 executionGasLimit, uint256 index);
 
     error InvalidBatchId(bytes32 batchId);
 
     error BatchAlreadyExists(bytes32 batchId);
 
+    // TODO: Unused
     error InvalidBatchExecutionLimit(uint16 limit);
 
     error BillingCapacityExceeded(uint256 capacity, uint256 paidCapacity);
