@@ -89,6 +89,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
             executionDataHandling: ExecutionDataHandling.NIL,
             maxGasLimit: 0,
             executionDelay: 0,
+            chainId: 0,
             selector: "",
             workItems: new WorkItem[](0)
         });
@@ -149,6 +150,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
             executionDataHandling: newWork.checkParams.executionDataHandling,
             maxGasLimit: newWork.checkParams.maxGasLimit,
             executionDelay: newWork.checkParams.executionDelay,
+            chainId: newWork.checkParams.chainId,
             workItems: newWork.checkParams.workItems
         });
 

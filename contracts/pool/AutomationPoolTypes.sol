@@ -118,14 +118,15 @@ interface AutomationPoolTypes {
         OffchainCheckDataHandling offchainCheckDataHandling;
         CheckWorkCallResultInterpretation callResultInterpretation;
         ExecutionDataHandling executionDataHandling;
-        // Slot 2: 80 bits
+        // Slot 2: 160 bits
         uint64 maxGasLimit; // In execution gas units for the executor call
         /**
-         * @notice If non-zero, this is the expected minimum delay in seconds between the time the work requirement is
+         * @notice If non-zero, this is the expected minimum delay in milliseconds between the time the work requirement is
          * noticed and the time it is expected to be performed. During this time, if the worker notices the work is no
          * longer required, they will not execute the work and the delay will be reset.
          */
-        uint16 executionDelay;
+        uint32 executionDelay; // TODO: Change in UI to ms
+        uint64 chainId;
         // Slots 3+
         bytes selector; // Function selector or event topics
         WorkItem[] workItems;
