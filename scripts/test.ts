@@ -147,6 +147,7 @@ async function main() {
         executionDataHandling: EXECUTION_DATA_HANDLING.ACI,
         maxGasLimit: checkGasLimit,
         executionDelay: 0,
+        chainId: 0,
         workItems: [workItem1],
     };
     const execParams: AutomationPoolTypes.WorkExecutionParamsStruct = {
