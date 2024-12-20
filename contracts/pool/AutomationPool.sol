@@ -280,7 +280,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                 needsExecution: needsWork,
                 callWasSuccessful: results[i].success,
                 checkCallData: triggers[i],
-                callCallResult: results[i].returnData,
+                checkCallResult: results[i].returnData,
                 executionData: workData
             });
         }
