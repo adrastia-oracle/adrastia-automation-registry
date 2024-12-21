@@ -32,7 +32,8 @@ contract AutomationRegistryFactory is IAutomationRegistryFactory, Initializable,
          */
         uint16 maintenanceFee;
         /**
-         * @notice The fee collected from the registry for performing work, in basis points.
+         * @notice The fee collected from the registry for performing work, as a portion of the gas premium, in basis
+         * points.
          */
         uint16 workFee;
     }

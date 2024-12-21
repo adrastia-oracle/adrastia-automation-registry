@@ -239,6 +239,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         uint256 indexed id,
         address indexed pool,
         address indexed worker,
+        uint256 protocolDebt,
         uint256 registryDebt,
         uint256 workerDebt,
         uint256 timestamp
@@ -247,10 +248,9 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
     event PoolGasDebtRecovered(
         uint256 indexed id,
         address indexed pool,
+        uint256 protocolDebt,
         uint256 registryDebt,
         uint256 workerDebt,
-        uint256 registryFee,
-        uint256 protocolFee,
         uint256 timestamp
     );
 
@@ -675,23 +675,19 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         uint256 gasUsed,
         uint256 workerCompensation,
         uint256 registryFee,
+        uint256 protocolFee,
         uint256 workerDebt,
-        uint256 registryDebt
+        uint256 registryDebt,
+        uint256 protocolDebt
     ) external payable virtual override {
         address pool = _pools[poolId - 1];
         if (msg.sender != pool) {
             revert OnlyCallableByPool(pool, msg.sender);
         }
 
-        assert(msg.value == registryFee);
+        assert(msg.value == protocolFee + registryFee);
 
         address factory_ = factory;
-
-        (, , uint16 workFee) = IAutomationRegistryFactory(factory_).getFeeConfig();
-
-        // Calculate the protocol fee, rounding up
-        uint256 protocolFee = (registryFee * workFee).ceilDiv(10000);
-        uint256 feeToRegistry = registryFee - protocolFee;
 
         if (protocolFee > 0) {
             (bool protocolFeesPaid, ) = payable(factory_).call{value: protocolFee}("");
@@ -706,20 +702,21 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
             worker,
             gasUsed,
             workerCompensation,
-            feeToRegistry,
+            registryFee,
             protocolFee,
             workerDebt,
             registryDebt,
             block.timestamp
         );
 
-        if (workerDebt + registryDebt > 0) {
-            emit PoolGasDebtRecorded(poolId, pool, worker, registryDebt, workerDebt, block.timestamp);
+        if (workerDebt + registryDebt + protocolDebt > 0) {
+            emit PoolGasDebtRecorded(poolId, pool, worker, protocolDebt, registryDebt, workerDebt, block.timestamp);
         }
     }
 
     function poolGasDebtRecovered(
         uint256 poolId,
+        uint256 protocolDebt,
         uint256 registryDebt,
         uint256 workerDebt
     ) external payable virtual override {
@@ -728,24 +725,16 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
             revert OnlyCallableByPool(pool, msg.sender);
         }
 
-        assert(msg.value == registryDebt);
+        assert(msg.value == protocolDebt + registryDebt);
 
-        address factory_ = factory;
-
-        (, , uint16 workFee) = IAutomationRegistryFactory(factory_).getFeeConfig();
-
-        // Calculate the protocol fee, rounding up
-        uint256 protocolFee = (registryDebt * workFee).ceilDiv(10000);
-        uint256 feeToRegistry = registryDebt - protocolFee;
-
-        if (protocolFee > 0) {
-            (bool protocolFeesPaid, ) = payable(factory_).call{value: protocolFee}("");
+        if (protocolDebt > 0) {
+            (bool protocolFeesPaid, ) = payable(factory).call{value: protocolDebt}("");
             if (!protocolFeesPaid) {
                 revert FailedToPayProtocolWorkFees();
             }
         }
 
-        emit PoolGasDebtRecovered(poolId, pool, registryDebt, workerDebt, feeToRegistry, protocolFee, block.timestamp);
+        emit PoolGasDebtRecovered(poolId, pool, protocolDebt, registryDebt, workerDebt, block.timestamp);
     }
 
     /******************************************************************************************************************
@@ -757,7 +746,14 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         view
         virtual
         override
-        returns (uint256 gasPrice, uint256 overhead, uint16 registryFee, address l1GasCalculator, uint256 gasPremium)
+        returns (
+            uint256 gasPrice,
+            uint256 overhead,
+            uint16 registryFee,
+            address l1GasCalculator,
+            uint256 gasPremium,
+            uint16 protocolFee
+        )
     {
         GasConfig memory config = _gasConfig;
 
@@ -773,6 +769,8 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         registryFee = config.workFee;
         l1GasCalculator = config.l1GasCalculator;
         gasPremium = config.gasPricePremium;
+
+        (, , protocolFee) = IAutomationRegistryFactory(factory).getFeeConfig();
     }
 
     function hasRole(bytes32 role, address account) public view virtual override returns (bool) {

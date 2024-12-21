@@ -299,6 +299,10 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         uint16 registryFee;
         address l1GasCalculator;
         uint256 gasPremiumBasisPoints;
+        uint16 protocolFee;
+        uint256 debtToProtocol;
+        uint256 debtToRegistry;
+        uint256 debtToWorker;
     }
 
     function performWork(
@@ -340,7 +344,8 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             gasData.gasOverhead,
             gasData.registryFee,
             gasData.l1GasCalculator,
-            gasData.gasPremiumBasisPoints
+            gasData.gasPremiumBasisPoints,
+            gasData.protocolFee
         ) = IAutomationRegistry(registry_).getGasData();
 
         // Check execution restrictions and get gas and fee info
@@ -455,8 +460,6 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
         // If the balance is insufficient, we consume the remaining balance and record the debt.
         // This is to prevent the worker from wasting gas without compensation.
-        uint256 debtToRegistry = 0;
-        uint256 debtToWorker = 0;
         {
             uint256 poolBalance = address(this).balance;
 
@@ -475,12 +478,13 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
                 // Calculate who the debt is owed to
                 // Note: Fees to registry and protocol are intentionally rounded down, in favor of workers
-                debtToRegistry = (premiumDebt * gasData.registryFee) / 10000;
-                debtToWorker = debt - debtToRegistry;
+                gasData.debtToProtocol = (premiumDebt * gasData.protocolFee) / 10000;
+                gasData.debtToRegistry = ((premiumDebt - gasData.debtToProtocol) * gasData.registryFee) / 10000;
+                gasData.debtToWorker = debt - gasData.debtToProtocol - gasData.debtToRegistry;
 
                 uint256 oldTotalGasDebt = _totalGasDebt;
 
-                _addGasDebt(msg.sender, debtToRegistry, debtToWorker);
+                _addGasDebt(msg.sender, gasData.debtToProtocol, gasData.debtToRegistry, gasData.debtToWorker);
 
                 emit GasDebtUpdated(msg.sender, GasDebtChange.INCREASE, debt, oldTotalGasDebt + debt, block.timestamp);
             }
@@ -488,9 +492,15 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
         // Calculate the amount of gas compensation that the registry collects
         // Note: Fees to registry and protocol are intentionally rounded down, in favor of workers
-        uint256 totalPremium = gasData.totalGasCompensation - gasData.gasCompensationWithoutPremium;
-        uint256 feeToRegistry = (totalPremium * gasData.registryFee) / 10000;
-        uint256 feeToWorker = gasData.totalGasCompensation - feeToRegistry;
+        uint256 feeToProtocol;
+        uint256 feeToRegistry;
+        uint256 feeToWorker;
+        {
+            uint256 totalPremium = gasData.totalGasCompensation - gasData.gasCompensationWithoutPremium;
+            feeToProtocol = (totalPremium * gasData.protocolFee) / 10000;
+            feeToRegistry = ((totalPremium - feeToProtocol) * gasData.registryFee) / 10000;
+            feeToWorker = gasData.totalGasCompensation - feeToProtocol - feeToRegistry;
+        }
 
         if (feeToWorker > 0) {
             (bool sentToWorker, ) = payable(msg.sender).call{value: feeToWorker}("");
@@ -510,19 +520,21 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             numSkipped,
             gasData.gasUsed,
             gasData.totalGasCompensation,
-            debtToRegistry + debtToWorker,
+            gasData.debtToProtocol + gasData.debtToRegistry + gasData.debtToWorker,
             block.timestamp
         );
 
         // Inform the registry about the work performed
-        IAutomationRegistry(registry_).poolWorkPerformedCallback{value: feeToRegistry}(
+        IAutomationRegistry(registry_).poolWorkPerformedCallback{value: feeToProtocol + feeToRegistry}(
             id,
             msg.sender,
             gasData.gasUsed,
             feeToWorker,
             feeToRegistry,
-            debtToWorker,
-            debtToRegistry
+            feeToProtocol,
+            gasData.debtToWorker,
+            gasData.debtToRegistry,
+            gasData.debtToProtocol
         );
     }
 
@@ -541,14 +553,14 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             if (poolBalance >= oldTotalGasDebt) {
                 // Paying off in full
 
-                // Calculate total worker debt
-                (, uint256 totalWorkerDebt) = _calculateTotalGasDebt();
+                uint256 totalWorkerDebt = 0;
 
                 // Pay off worker debts
                 GasDebtToWorker[] memory workerDebts = _gasDebt.workerDebts;
                 uint256 workerDebtsLen = workerDebts.length;
                 for (uint256 i = 0; i < workerDebtsLen; ++i) {
                     uint256 workerDebt = workerDebts[i].debt;
+                    totalWorkerDebt += workerDebt;
 
                     (bool success, ) = payable(workerDebts[i].worker).call{value: workerDebt}("");
                     if (!success) {
@@ -557,17 +569,20 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                     }
                 }
 
-                uint256 registryDebt = oldTotalGasDebt - totalWorkerDebt;
+                uint256 debtToProtocol = _gasDebt.protocolDebt;
+                uint256 debtToRegistry = _gasDebt.registryDebt;
 
                 // Pay off registry debt and inform the registry
-                IAutomationRegistry(registry).poolGasDebtRecovered{value: registryDebt}(
+                IAutomationRegistry(registry).poolGasDebtRecovered{value: debtToProtocol + debtToRegistry}(
                     id,
-                    registryDebt,
+                    debtToProtocol,
+                    debtToRegistry,
                     totalWorkerDebt
                 );
 
                 // Update debt records
                 _totalGasDebt = 0;
+                _gasDebt.protocolDebt = 0;
                 _gasDebt.registryDebt = 0;
                 _gasDebt.workerDebts = new GasDebtToWorker[](0);
 
@@ -725,6 +740,8 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         // Load debt
         GasDebt memory gasDebt = _gasDebt;
 
+        // Add protocol debt
+        totalDebt += gasDebt.protocolDebt;
         // Add registry debt
         totalDebt += gasDebt.registryDebt;
 
@@ -741,8 +758,14 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         return (totalDebt, totalWorkerDebt);
     }
 
-    function _addGasDebt(address worker, uint256 registryDebt, uint256 workerDebt) internal virtual {
+    function _addGasDebt(
+        address worker,
+        uint256 protocolDebt,
+        uint256 registryDebt,
+        uint256 workerDebt
+    ) internal virtual {
         // Add registry debt, if any
+        _gasDebt.protocolDebt += protocolDebt;
         _gasDebt.registryDebt += registryDebt;
 
         if (workerDebt > 0) {
@@ -816,7 +839,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         }
 
         // Check gas price limitations
-        (uint256 gasPrice, , , , ) = IAutomationRegistry(registry_).getGasData();
+        (uint256 gasPrice, , , , , ) = IAutomationRegistry(registry_).getGasData();
         if (gasPrice > execParams.maxGasPrice) {
             // Gas price exceeds the limit.
             // The purpose of this restriction is to prevent the worker from spending more gas than the user desires.

@@ -27,7 +27,14 @@ interface IAutomationRegistry {
     function getGasData()
         external
         view
-        returns (uint256 price, uint256 overhead, uint16 registryFee, address l1GasCalculator, uint256 gasPremium);
+        returns (
+            uint256 price,
+            uint256 overhead,
+            uint16 registryFee,
+            address l1GasCalculator,
+            uint256 gasPremium,
+            uint16 protocolFee
+        );
 
     /**
      * @notice Get the pool restrictions for the automation system.
@@ -72,9 +79,16 @@ interface IAutomationRegistry {
         uint256 gasUsed,
         uint256 workerCompensation,
         uint256 registryFee,
+        uint256 protocolFee,
         uint256 workerDebt,
-        uint256 registryDebt
+        uint256 registryDebt,
+        uint256 protocolDebt
     ) external payable;
 
-    function poolGasDebtRecovered(uint256 poolId, uint256 registryDebt, uint256 workerDebt) external payable;
+    function poolGasDebtRecovered(
+        uint256 poolId,
+        uint256 protocolDebt,
+        uint256 registryDebt,
+        uint256 workerDebt
+    ) external payable;
 }

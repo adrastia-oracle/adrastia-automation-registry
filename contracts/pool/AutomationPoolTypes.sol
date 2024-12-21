@@ -23,6 +23,7 @@ interface AutomationPoolTypes {
     }
 
     struct GasDebt {
+        uint256 protocolDebt;
         uint256 registryDebt;
         GasDebtToWorker[] workerDebts;
     }
