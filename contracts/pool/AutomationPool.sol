@@ -292,7 +292,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
     struct PerformWorkGasData {
         uint256 gasStart;
         uint256 gasUsed;
-        uint256 gasCompensation;
+        uint256 gasCompensationBeforePremium;
         uint256 gasPrice;
         uint256 gasOverhead;
         uint16 registryFee;
@@ -447,8 +447,8 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
             gasData.gasCompensation =
                 ((((gasData.gasUsed + gasData.gasOverhead) * gasData.gasPrice) + l1GasFee) *
-                    (100 + gasData.gasPremium)) /
-                100;
+                    (10000 + gasData.gasPremium)) /
+                10000;
         }
 
         // If the balance is insufficient, we consume the remaining balance and record the debt.

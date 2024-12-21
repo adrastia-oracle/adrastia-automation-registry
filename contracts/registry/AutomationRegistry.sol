@@ -30,15 +30,15 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
      *****************************************************************************************************************/
 
     struct GasConfig {
-        // SLOT 1 - 240 bits
+        // SLOT 1 - 256 bits
         /**
          * @notice The address of the gas price oracle. If set to the zero address, tx.gasprice will be used.
          */
         address gasPriceOracle;
         /**
-         * @notice The premium to be added to the gas price, in percentage points.
+         * @notice The premium to be added to the gas price, in basis points. Ex: 100 = 1% premium.
          */
-        uint16 gasPricePremium;
+        uint32 gasPricePremium;
         /**
          * @notice The overhead to be added to the gas used, in gas units.
          */
@@ -290,9 +290,9 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
 
     error FailedToPayProtocolWorkFees();
 
-    error GasPricePremiumTooLow(uint16 minGasPricePremium, uint16 gasPricePremium);
+    error GasPricePremiumTooLow(uint32 minGasPricePremium, uint32 gasPricePremium);
 
-    error GasPricePremiumTooHigh(uint16 maxGasPricePremium, uint16 gasPricePremium);
+    error GasPricePremiumTooHigh(uint32 maxGasPricePremium, uint32 gasPricePremium);
 
     error GasOverheadTooHigh(uint64 maxGasOverhead, uint64 gasOverhead);
 
@@ -883,8 +883,8 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         }
 
         (
-            uint16 minGasPricePremium,
-            uint16 maxGasPricePremium,
+            uint32 minGasPricePremium,
+            uint32 maxGasPricePremium,
             uint64 maxGasOverhead,
             uint96 maxMinBalance,
             uint16 minWorkFee,

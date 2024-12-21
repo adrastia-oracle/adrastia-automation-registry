@@ -30,8 +30,8 @@ interface IAutomationRegistryFactory {
         external
         view
         returns (
-            uint16 minGasPricePremium,
-            uint16 maxGasPricePremium,
+            uint32 minGasPricePremium,
+            uint32 maxGasPricePremium,
             uint64 maxGasOverhead,
             uint96 maxMinBalance,
             uint16 minWorkFee,

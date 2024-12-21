@@ -38,14 +38,15 @@ contract AutomationRegistryFactory is IAutomationRegistryFactory, Initializable,
     }
 
     struct RegistryRestrictions {
+        // SLOT 1: 256 bits
         /**
-         * @notice The minimum gas price premium that registries can set, in percentage points.
+         * @notice The minimum gas price premium that registries can set, in basis points.
          */
-        uint16 minGasPricePremium;
+        uint32 minGasPricePremium;
         /**
-         * @notice The maximum gas price premium that registries can set, in percentage points.
+         * @notice The maximum gas price premium that registries can set, in basis points.
          */
-        uint16 maxGasPricePremium;
+        uint32 maxGasPricePremium;
         /**
          * @notice The maximum gas overhead that registries can set, in gas units.
          */
@@ -240,7 +241,7 @@ contract AutomationRegistryFactory is IAutomationRegistryFactory, Initializable,
 
     error InvalidBillingToken(address token);
 
-    error MinGasPricePremiumGreaterThanMax(uint16 minGasPricePremium, uint16 maxGasPricePremium);
+    error MinGasPricePremiumGreaterThanMax(uint32 minGasPricePremium, uint32 maxGasPricePremium);
 
     error MinWorkFeeGreaterThanMax(uint16 minWorkFee, uint16 maxWorkFee);
 
@@ -416,8 +417,8 @@ contract AutomationRegistryFactory is IAutomationRegistryFactory, Initializable,
         virtual
         override
         returns (
-            uint16 minGasPricePremium,
-            uint16 maxGasPricePremium,
+            uint32 minGasPricePremium,
+            uint32 maxGasPricePremium,
             uint64 maxGasOverhead,
             uint96 maxMinBalance,
             uint16 minWorkFee,

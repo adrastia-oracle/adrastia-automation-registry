@@ -11,7 +11,7 @@ import {
 import { WORKER } from "../src/roles";
 import { default as MockEnvironmentModule } from "../ignition/modules/mock-environment";
 import { AutomationPoolTypes } from "../typechain-types/contracts/pool/IAutomationPool";
-import { keccak256 } from "ethers";
+import { formatUnits, keccak256 } from "ethers";
 
 const BATCH_EXECUTION_ID = ethers.id(
     "BatchExecution(bytes32,address,address,uint8,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
@@ -104,9 +104,13 @@ async function main() {
         l1GasCalculator: l1GasCalculatorStub.target,
     });
 
+    const gasConfigAfter = await registry.getGasConfig();
+
+    console.log("Gas price premium: " + formatUnits(gasConfigAfter.gasPricePremium, 4) + "%");
+
     console.log("Set L1 gas calculator");
 
-    await l1GasCalculatorStub.setGasFee(ethers.parseUnits("0.01", "ether"));
+    await l1GasCalculatorStub.setGasFee(ethers.parseUnits("0.0", "ether"));
 
     const [admin, worker] = await ethers.getSigners();
     const adminAddress = await admin.getAddress();

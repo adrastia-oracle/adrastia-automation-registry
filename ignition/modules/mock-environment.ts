@@ -21,8 +21,8 @@ export default buildModule("MockEnvironment", (m) => {
     };
 
     const initialFactoryRegistryRestrictions = {
-        minGasPricePremium: 1, // 1%
-        maxGasPricePremium: 1000, // 1000%
+        minGasPricePremium: 0, // 0%
+        maxGasPricePremium: 100000, // 1000%
         maxGasOverhead: 100_000, // 100,000 gas
         maxMinBalance: ethers.parseEther("10"),
         minWorkFee: 0, // 0%
@@ -98,8 +98,8 @@ export default buildModule("MockEnvironment", (m) => {
     );
 
     const gasPriceOracle = m.getParameter("gasPriceOracle", ethers.ZeroAddress);
-    const gasPricePremium = m.getParameter("gasPricePremium", 500);
-    const gasOverhead = m.getParameter("gasOverhead", 40000);
+    const gasPricePremium = m.getParameter("gasPricePremium", 100_00); // 100%
+    const gasOverhead = m.getParameter("gasOverhead", 100_000);
     const l1GasCalculator = m.getParameter("l1GasCalculator", ethers.ZeroAddress);
 
     const initialMetadata = {
@@ -115,7 +115,7 @@ export default buildModule("MockEnvironment", (m) => {
         checkGasLimit: 1e6,
         executionGasLimit: 1e6,
         minBalance: ethers.parseEther("1"),
-        workFee: 100, // 1%
+        workFee: 0, // 1%
         l1GasCalculator: l1GasCalculator,
     };
 
