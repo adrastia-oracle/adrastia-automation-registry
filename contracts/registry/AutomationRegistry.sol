@@ -57,7 +57,8 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
          */
         uint96 minBalance;
         /**
-         * @notice The fee for performing work, in basis points, as a percent of the gas fees paid by the pool.
+         * @notice The fee for performing work, in basis points, as a portion of the gas premium paid by the pool after
+         * protocol fees are taken.
          */
         uint16 workFee;
         // SLOT 3 - 160 bits
