@@ -292,12 +292,13 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
     struct PerformWorkGasData {
         uint256 gasStart;
         uint256 gasUsed;
-        uint256 gasCompensationBeforePremium;
+        uint256 gasCompensationWithoutPremium;
+        uint256 totalGasCompensation;
         uint256 gasPrice;
         uint256 gasOverhead;
         uint16 registryFee;
         address l1GasCalculator;
-        uint256 gasPremium;
+        uint256 gasPremiumBasisPoints;
     }
 
     function performWork(
@@ -339,7 +340,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             gasData.gasOverhead,
             gasData.registryFee,
             gasData.l1GasCalculator,
-            gasData.gasPremium
+            gasData.gasPremiumBasisPoints
         ) = IAutomationRegistry(registry_).getGasData();
 
         // Check execution restrictions and get gas and fee info
@@ -445,46 +446,57 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
             gasData.gasUsed = gasData.gasStart - gasleft();
 
-            gasData.gasCompensation =
-                ((((gasData.gasUsed + gasData.gasOverhead) * gasData.gasPrice) + l1GasFee) *
-                    (10000 + gasData.gasPremium)) /
+            gasData.gasCompensationWithoutPremium = (((gasData.gasUsed + gasData.gasOverhead) * gasData.gasPrice) +
+                l1GasFee);
+            gasData.totalGasCompensation =
+                (gasData.gasCompensationWithoutPremium * (10000 + gasData.gasPremiumBasisPoints)) /
                 10000;
         }
 
         // If the balance is insufficient, we consume the remaining balance and record the debt.
         // This is to prevent the worker from wasting gas without compensation.
-        uint256 registryDebt = 0;
-        uint256 workerDebt = 0;
+        uint256 debtToRegistry = 0;
+        uint256 debtToWorker = 0;
         {
             uint256 poolBalance = address(this).balance;
-            uint256 debt = 0;
 
-            if (poolBalance < gasData.gasCompensation) {
-                debt = gasData.gasCompensation - poolBalance;
-                gasData.gasCompensation = poolBalance;
-            }
+            if (poolBalance < gasData.totalGasCompensation) {
+                uint256 debt = gasData.totalGasCompensation - poolBalance;
 
-            if (debt > 0) {
-                registryDebt = (debt * gasData.registryFee) / 10000;
-                workerDebt = debt - registryDebt;
+                // Recalculate gas compensation using the remaining balance
+                gasData.totalGasCompensation = poolBalance;
+                gasData.gasCompensationWithoutPremium =
+                    (gasData.totalGasCompensation * 10000) /
+                    (10000 + gasData.gasPremiumBasisPoints);
+
+                // Calculate the gas preium portion of the debt
+                uint256 debtWithoutPremium = (debt * 10000) / (10000 + gasData.gasPremiumBasisPoints);
+                uint256 premiumDebt = debt - debtWithoutPremium;
+
+                // Calculate who the debt is owed to
+                // Note: Fees to registry and protocol are intentionally rounded down, in favor of workers
+                debtToRegistry = (premiumDebt * gasData.registryFee) / 10000;
+                debtToWorker = debt - debtToRegistry;
 
                 uint256 oldTotalGasDebt = _totalGasDebt;
 
-                _addGasDebt(msg.sender, registryDebt, workerDebt);
+                _addGasDebt(msg.sender, debtToRegistry, debtToWorker);
 
                 emit GasDebtUpdated(msg.sender, GasDebtChange.INCREASE, debt, oldTotalGasDebt + debt, block.timestamp);
             }
         }
 
-        // Calculate the amount of gas compensation that the registry collects, rounding down
-        uint256 gasToRegistry = (gasData.gasCompensation * gasData.registryFee) / 10000;
-        uint256 gasToWorker = gasData.gasCompensation - gasToRegistry;
+        // Calculate the amount of gas compensation that the registry collects
+        // Note: Fees to registry and protocol are intentionally rounded down, in favor of workers
+        uint256 totalPremium = gasData.totalGasCompensation - gasData.gasCompensationWithoutPremium;
+        uint256 feeToRegistry = (totalPremium * gasData.registryFee) / 10000;
+        uint256 feeToWorker = gasData.totalGasCompensation - feeToRegistry;
 
-        if (gasToWorker > 0) {
-            (bool sentToWorker, ) = payable(msg.sender).call{value: gasToWorker}("");
+        if (feeToWorker > 0) {
+            (bool sentToWorker, ) = payable(msg.sender).call{value: feeToWorker}("");
             if (!sentToWorker) {
                 // Failed to compensate the worker.
-                revert FailedToCompensateWorker(msg.sender, gasToWorker);
+                revert FailedToCompensateWorker(msg.sender, feeToWorker);
             }
         }
 
@@ -497,20 +509,20 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             numFailures,
             numSkipped,
             gasData.gasUsed,
-            gasData.gasCompensation,
-            registryDebt + workerDebt,
+            gasData.totalGasCompensation,
+            debtToRegistry + debtToWorker,
             block.timestamp
         );
 
         // Inform the registry about the work performed
-        IAutomationRegistry(registry_).poolWorkPerformedCallback{value: gasToRegistry}(
+        IAutomationRegistry(registry_).poolWorkPerformedCallback{value: feeToRegistry}(
             id,
             msg.sender,
             gasData.gasUsed,
-            gasToWorker,
-            gasToRegistry,
-            workerDebt,
-            registryDebt
+            feeToWorker,
+            feeToRegistry,
+            debtToWorker,
+            debtToRegistry
         );
     }
 

@@ -100,7 +100,7 @@ async function main() {
         checkGasLimit: 1_000_000n,
         executionGasLimit: 1_000_000n,
         minBalance: ethers.parseEther("1"),
-        workFee: 100,
+        workFee: gasConfig.workFee,
         l1GasCalculator: l1GasCalculatorStub.target,
     });
 
