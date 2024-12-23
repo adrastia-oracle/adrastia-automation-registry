@@ -4,7 +4,7 @@ import PoolImplementationModule from "../../ignition/modules/pool-implementation
 async function main() {
     // Deploy a new PoolWorkFacet
     const { poolImplementation } = await ignition.deploy(PoolImplementationModule, {
-        deploymentId: "PoolImplementation4",
+        deploymentId: "PoolImplementation2",
     });
     const implementationAddress = poolImplementation.target;
 
@@ -12,7 +12,7 @@ async function main() {
 
     const registryFactory = await ethers.getContractAt(
         "AutomationRegistryFactory",
-        "0x5F578288B772b29FC91C957B9351D08Fbc925A14",
+        "0x4fa2B4D88141Cda9d55cD406f495fc4eB2CF7970",
     );
 
     const beacon = await ethers.getContractAt("UpgradeableBeacon", await registryFactory.poolBeacon());
