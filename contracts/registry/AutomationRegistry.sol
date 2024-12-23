@@ -26,103 +26,6 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
     using Math for uint256;
 
     /******************************************************************************************************************
-     * TYPES
-     *****************************************************************************************************************/
-
-    struct GasConfig {
-        // SLOT 1 - 256 bits
-        /**
-         * @notice The address of the gas price oracle. If set to the zero address, tx.gasprice will be used.
-         */
-        address gasPriceOracle;
-        /**
-         * @notice The premium to be added to the gas price, in basis points. Ex: 100 = 1% premium.
-         */
-        uint32 gasPricePremium;
-        /**
-         * @notice The overhead to be added to the gas used, in gas units.
-         */
-        uint64 gasOverhead;
-        // SLOT 2 - 240 bits
-        /**
-         * @notice The maximum gas limit of the executor to check for work.
-         */
-        uint64 checkGasLimit;
-        /**
-         * @notice The maximum gas limit of the executor to perform work.
-         */
-        uint64 executionGasLimit;
-        /**
-         * @notice The minimum balance required to execute the automation, in wei.
-         */
-        uint96 minBalance;
-        /**
-         * @notice The fee for performing work, in basis points, as a portion of the gas premium paid by the pool after
-         * protocol fees are taken.
-         */
-        uint16 workFee;
-        // SLOT 3 - 160 bits
-        /**
-         * @notice The address of the L1 gas calculator.
-         */
-        address l1GasCalculator;
-    }
-
-    struct BillingConfig {
-        // SLOT 1 - 256 bits
-        /**
-         * @notice The fee for creating a pool, in the billing token's smallest unit of account.
-         */
-        uint96 poolCreationFee;
-        /**
-         * @notice The maintenance fee for the pool, in the billing token's smallest unit of account.
-         */
-        uint96 maintenanceFee;
-        /**
-         * @notice The interval for maintenance fees, in seconds. A.k.a. the billing period.
-         */
-        uint32 maintenanceInterval;
-        /**
-         * @notice The grace period for maintenance fees, in seconds. This is the amount of time that the pool has to
-         * pay the maintenance fee before it gets closed.
-         */
-        uint32 gracePeriod;
-        // SLOT 2
-        /**
-         * @notice The closing period for the pool, in seconds. This is the amount of time that the pool operator must
-         * wait before they can withdraw the remaining balance after initiating a close.
-         */
-        uint32 closingPeriod;
-        /**
-         * @notice The token used for billing.
-         */
-        address billingToken;
-    }
-
-    struct WorkerConfig {
-        /**
-         * @notice The interval that workers use to check for work, in milliseconds.
-         * @dev Workers should conform to this interval. It's not possible to enforce onchain.
-         */
-        uint32 pollingIntervalMs;
-    }
-
-    struct Metadata {
-        /**
-         * @notice The name of the registry.
-         */
-        string name;
-        /**
-         * @notice The description of the registry.
-         */
-        string description;
-        /**
-         * @notice The type of the pools that can be created by this registry.
-         */
-        uint16 poolType;
-    }
-
-    /******************************************************************************************************************
      * CONSTANTS
      *****************************************************************************************************************/
 
@@ -138,17 +41,17 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
     /**
      * @notice The ID of the registry.
      */
-    uint256 public id;
+    uint256 public override id;
 
     /**
      * @notice The address of the factory that created this registry.
      */
-    address public factory;
+    address public override factory;
 
     /**
      * @notice The address of the registry diamond.
      */
-    address public diamond;
+    address public override diamond;
 
     /**
      * @notice The address of the pool beacon.
@@ -163,7 +66,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
     /**
      * @notice The address of the pool diamond.
      */
-    address public poolDiamond;
+    address public override poolDiamond;
 
     /**
      * @notice The list of pools created by this registry.
@@ -196,144 +99,6 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
      * item is used as the suggested work item for all items; other work items are ignored.
      */
     AutomationPoolTypes.BatchMapping internal _suggestedBatch;
-
-    /******************************************************************************************************************
-     * EVENTS
-     *****************************************************************************************************************/
-
-    event PoolCreated(address indexed creator, uint256 indexed id, address indexed pool, uint256 timestamp);
-
-    event PoolClosed(uint256 indexed id, address indexed pool, uint256 timestamp);
-
-    event PoolCreationFeeCollected(
-        uint256 indexed id,
-        address indexed pool,
-        address indexed token,
-        uint256 protocolAmount,
-        uint256 registryAmount,
-        uint256 timestamp
-    );
-
-    event PoolMaintenanceFeeCollected(
-        uint256 indexed id,
-        address indexed pool,
-        address indexed token,
-        uint256 protocolAmount,
-        uint256 registryAmount,
-        uint256 timestamp
-    );
-
-    event PoolWorkPerformed(
-        uint256 indexed id,
-        address indexed pool,
-        address indexed worker,
-        uint256 gasUsed,
-        uint256 workerCompensation,
-        uint256 registryFee,
-        uint256 protocolFee,
-        uint256 workerDebt,
-        uint256 registryDebt, // Before paying the protocol fees
-        uint256 timestamp
-    );
-
-    event PoolGasDebtRecorded(
-        uint256 indexed id,
-        address indexed pool,
-        address indexed worker,
-        uint256 protocolDebt,
-        uint256 registryDebt,
-        uint256 workerDebt,
-        uint256 timestamp
-    );
-
-    event PoolGasDebtRecovered(
-        uint256 indexed id,
-        address indexed pool,
-        uint256 protocolDebt,
-        uint256 registryDebt,
-        uint256 workerDebt,
-        uint256 timestamp
-    );
-
-    event BillingConfigUpdated(BillingConfig oldConfig, BillingConfig newConfig, uint256 timestamp);
-
-    event GasConfigUpdated(GasConfig oldConfig, GasConfig newConfig, uint256 timestamp);
-
-    event WorkerConfigUpdated(WorkerConfig oldConfig, WorkerConfig newConfig, uint256 timestamp);
-
-    event MetadataUpdated(Metadata oldMetadata, Metadata newMetadata, uint256 timestamp);
-
-    event SuggestedBatchUpdated(
-        AutomationPoolTypes.BatchMapping oldBatch,
-        AutomationPoolTypes.BatchMapping newBatch,
-        uint256 timestamp
-    );
-
-    /******************************************************************************************************************
-     * ERRORS
-     *****************************************************************************************************************/
-
-    error MissingPoolBeacon();
-
-    error OnlyCallableByPool(address pool, address caller);
-
-    error ConfigNotChanged();
-
-    error BillingConfigNotChanged();
-
-    error WorkerConfigNotChanged();
-
-    error MetadataNotChanged();
-
-    error SuggestedBatchNotChanged();
-
-    error RoleManagedByContract(bytes32 role, address contractAddress);
-
-    error FailedToPayProtocolWorkFees();
-
-    error GasPricePremiumTooLow(uint32 minGasPricePremium, uint32 gasPricePremium);
-
-    error GasPricePremiumTooHigh(uint32 maxGasPricePremium, uint32 gasPricePremium);
-
-    error GasOverheadTooHigh(uint64 maxGasOverhead, uint64 gasOverhead);
-
-    error MinBalanceTooHigh(uint96 maxMinBalance, uint96 minBalance);
-
-    error WorkFeeTooLow(uint16 minWorkFee, uint16 workFee);
-
-    error WorkFeeTooHigh(uint16 maxWorkFee, uint16 workFee);
-
-    error InvalidPollingInterval(uint32 pollingIntervalMs);
-
-    error InvalidGasPriceOracle(address gasPriceOracle);
-
-    error InvalidL1GasCalculator(address l1GasCalculator);
-
-    error MaintenanceIntervalTooLow(uint32 minMaintenanceInterval, uint32 maintenanceInterval);
-
-    error MaintenanceIntervalTooHigh(uint32 maxMaintenanceInterval, uint32 maintenanceInterval);
-
-    error GracePeriodTooLow(uint32 minGracePeriod, uint32 gracePeriod);
-
-    error GracePeriodTooHigh(uint32 maxGracePeriod, uint32 gracePeriod);
-
-    error ClosingPeriodTooLow(uint32 minClosingPeriod, uint32 closingPeriod);
-
-    error ClosingPeriodTooHigh(uint32 maxClosingPeriod, uint32 closingPeriod);
-
-    error PoolCreationFeeTooLow(uint96 minPoolCreationFee, uint96 poolCreationFee);
-
-    error PoolCreationFeeTooHigh(uint96 maxPoolCreationFee, uint96 poolCreationFee);
-
-    error MaintenanceFeeTooLow(uint96 minMaintenanceFeePerDay, uint256 maintenanceFeePerDay);
-
-    error MaintenanceFeeTooHigh(uint96 maxMaintenanceFeePerDay, uint256 maintenanceFeePerDay);
-
-    error InvalidBillingToken(address billingToken);
-
-    error RoleNotSupported(bytes32 role);
-
-    error FailedToInitializePool();
 
     /******************************************************************************************************************
      * INITIALIZER
@@ -440,11 +205,11 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         }
     }
 
-    function name() external view virtual returns (string memory) {
+    function name() external view virtual override returns (string memory) {
         return _metadata.name;
     }
 
-    function description() external view virtual returns (string memory) {
+    function description() external view virtual override returns (string memory) {
         return _metadata.description;
     }
 
@@ -452,19 +217,19 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         return _metadata.poolType;
     }
 
-    function getPool(uint256 poolId) external view virtual returns (address) {
+    function getPool(uint256 poolId) external view virtual override returns (address) {
         return _pools[poolId - 1];
     }
 
-    function getPools() external view virtual returns (address[] memory) {
+    function getPools() external view virtual override returns (address[] memory) {
         return _pools;
     }
 
-    function getPoolsCount() external view virtual returns (uint256) {
+    function getPoolsCount() external view virtual override returns (uint256) {
         return _pools.length;
     }
 
-    function createPool() external virtual {
+    function createPool() external virtual override {
         _authCreatePool();
 
         if (poolBeacon == address(0)) {
@@ -545,19 +310,19 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         _suggestedBatch = batch;
     }
 
-    function getGasConfig() external view virtual returns (GasConfig memory) {
+    function getGasConfig() external view virtual override returns (GasConfig memory) {
         return _gasConfig;
     }
 
-    function getBillingConfig() external view virtual returns (BillingConfig memory) {
+    function getBillingConfig() external view virtual override returns (BillingConfig memory) {
         return _billingConfig;
     }
 
-    function getWorkerConfig() external view virtual returns (WorkerConfig memory) {
+    function getWorkerConfig() external view virtual override returns (WorkerConfig memory) {
         return _workerConfig;
     }
 
-    function getSuggestedBatch() external view virtual returns (AutomationPoolTypes.BatchMapping memory) {
+    function getSuggestedBatch() external view virtual override returns (AutomationPoolTypes.BatchMapping memory) {
         return _suggestedBatch;
     }
 
@@ -601,7 +366,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
      * EXTERNAL FUNCTIONS - MONEY MANAGEMENT
      *****************************************************************************************************************/
 
-    function withdrawErc20(address token, address to, uint256 amount) external virtual {
+    function withdrawErc20(address token, address to, uint256 amount) external virtual override {
         _authWithdrawErc20();
 
         IERC20(token).safeTransfer(to, amount);
@@ -609,7 +374,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
         emit Erc20Withdrawn(msg.sender, token, to, amount, block.timestamp);
     }
 
-    function withdrawNative(address to, uint256 amount) external virtual {
+    function withdrawNative(address to, uint256 amount) external virtual override {
         _authWithdrawNative();
 
         payable(to).transfer(amount);
@@ -621,7 +386,7 @@ contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleM
      * EXTERNAL FUNCTIONS - POOL MANAGEMENT
      *****************************************************************************************************************/
 
-    function closePool(address pool) external virtual {
+    function closePool(address pool) external virtual override {
         _authClosePool();
 
         IAutomationPoolMinimal(pool).closePool();

@@ -17,6 +17,7 @@ import {Roles} from "../access/Roles.sol";
 import {IDiamondLoupe} from "../diamond/interfaces/IDiamondLoupe.sol";
 import {IL1GasCalculator} from "../gas/IL1GasCalculator.sol";
 
+// TODO: Log check and perform item revert reasons
 contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPoolBase {
     using SafeERC20 for IERC20;
 
