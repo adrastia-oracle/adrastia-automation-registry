@@ -169,6 +169,17 @@ interface AutomationPoolTypes {
         CLOSED
     }
 
+    struct PoolMetadata {
+        /**
+         * @notice The name of the pool.
+         */
+        string name;
+        /**
+         * @notice The description of the pool.
+         */
+        string description;
+    }
+
     enum OffchainCheckDataHandling {
         NIL,
         IGNORE,

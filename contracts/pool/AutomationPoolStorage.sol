@@ -23,4 +23,6 @@ contract AutomationPoolStorage is IAutomationPoolStorage, AutomationPoolTypes {
     bytes32[] internal _activeBatchIds;
 
     PoolStatus internal _status;
+
+    PoolMetadata internal _metadata;
 }

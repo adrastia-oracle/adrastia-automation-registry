@@ -87,6 +87,12 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
     event ExecutionRestricted(bytes32 indexed batchId, ExecutionError eError, uint256 timestamp);
 
     /******************************************************************************************************************
+     * EVENTS - EXECUTION
+     *****************************************************************************************************************/
+
+    event MetadataUpdated(PoolMetadata oldMetadata, PoolMetadata newMetadata, uint256 timestamp);
+
+    /******************************************************************************************************************
      * ERRORS
      *****************************************************************************************************************/
 

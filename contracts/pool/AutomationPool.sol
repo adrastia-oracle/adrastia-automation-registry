@@ -17,7 +17,6 @@ import {Roles} from "../access/Roles.sol";
 import {IDiamondLoupe} from "../diamond/interfaces/IDiamondLoupe.sol";
 import {IL1GasCalculator} from "../gas/IL1GasCalculator.sol";
 
-// TODO: Add Metadata
 contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPoolBase {
     using SafeERC20 for IERC20;
 
@@ -664,6 +663,20 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         return _totalGasDebt;
     }
 
+    function name() external view virtual returns (string memory) {
+        return _metadata.name;
+    }
+
+    function description() external view virtual returns (string memory) {
+        return _metadata.description;
+    }
+
+    function setMetadata(PoolMetadata calldata metadata) external virtual {
+        _authSetMetadata();
+
+        _setMetadata(metadata);
+    }
+
     /******************************************************************************************************************
      * PUBLIC FUNCTIONS
      *****************************************************************************************************************/
@@ -681,6 +694,18 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
     /******************************************************************************************************************
      * INTERNAL FUNCTIONS
      *****************************************************************************************************************/
+
+    function _setMetadata(PoolMetadata calldata newMetadata) internal virtual {
+        if (keccak256(abi.encode(_metadata)) == keccak256(abi.encode(newMetadata))) {
+            revert("Metadata not changed"); // TODO: Custom revert
+        }
+
+        PoolMetadata memory oldMetadata = _metadata;
+
+        _metadata = newMetadata;
+
+        emit MetadataUpdated(oldMetadata, newMetadata, block.timestamp);
+    }
 
     function _checkCondition(bytes memory returnData, bytes memory condition) internal virtual returns (bool) {
         uint256 condVersionAndOp = abi.decode(condition, (uint256));
@@ -900,6 +925,8 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
     function _authWithdrawGasFunds() internal view virtual onlyRole(Roles.POOL_MANAGER) {}
 
     function _authWithdrawErc20() internal view virtual onlyRole(Roles.POOL_MANAGER) {}
+
+    function _authSetMetadata() internal view virtual onlyRole(Roles.POOL_MANAGER) {}
 
     /**
      * @notice Authorizes the caller to close the pool. POOL_MANAGER and the registry can do this.
