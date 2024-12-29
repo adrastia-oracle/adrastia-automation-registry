@@ -4,7 +4,7 @@ import PoolImplementationModule from "../../ignition/modules/pool-implementation
 async function main() {
     // Deploy a new PoolWorkFacet
     const { poolImplementation } = await ignition.deploy(PoolImplementationModule, {
-        deploymentId: "PoolImplementation2",
+        deploymentId: "PoolImplementation3",
     });
     const implementationAddress = poolImplementation.target;
 
