@@ -368,7 +368,10 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
             // Only proceed if there's not an error
             if (pError == ExecutionError.NONE) {
-                if (workLength >= execParams.minBatchSize && workLength <= execParams.maxBatchSize) {
+                if (
+                    aggregateWorkItemCount >= execParams.minBatchSize &&
+                    aggregateWorkItemCount <= execParams.maxBatchSize
+                ) {
                     // Create call array
                     IPoolExecutor.Call[] memory calls = new IPoolExecutor.Call[](workLength);
 
