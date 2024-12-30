@@ -5,13 +5,14 @@ import {
     AutomationRegistryFactory,
     FakeERC20,
     IAutomationPool__factory,
+    IPoolExecutor,
     L1GasCalculatorStub,
     MockAutomationTarget,
 } from "../typechain-types";
 import { WORKER } from "../src/roles";
 import { default as MockEnvironmentModule } from "../ignition/modules/mock-environment";
 import { AutomationPoolTypes } from "../typechain-types/contracts/pool/IAutomationPool";
-import { formatUnits, keccak256 } from "ethers";
+import { formatUnits } from "ethers";
 
 const BATCH_EXECUTION_ID = ethers.id(
     "BatchExecution(bytes32,address,address,uint8,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
@@ -193,6 +194,9 @@ async function main() {
 
         // Assemble work data
         const workData: AutomationPoolTypes.PerformWorkItemStruct[] = [];
+        const calls: IPoolExecutor.CallStruct[] = [];
+
+        const execFuncSelector = execParams.selector;
 
         for (let i = 0; i < performWork.checkedWorkItems.length; ++i) {
             const checkedWorkItem: AutomationPoolTypes.CheckedWorkItemStructOutput = performWork.checkedWorkItems[i];
@@ -205,22 +209,30 @@ async function main() {
                 performWork.workDefinition.checkParams.workItems[Number(checkedWorkItem.index)];
 
             workData.push({
-                maxGasLimit: workItem.executionGasLimit,
-                value: workItem.value,
                 aggregateCount: 1,
                 flags: 0,
                 index: checkedWorkItem.index,
                 itemHash: checkedWorkItem.itemHash,
                 trigger: checkedWorkItem.checkCallData,
-                executionData: checkedWorkItem.executionData,
+            });
+
+            // Concat execFunctionSelector with the work item execution data
+            const callData = execFuncSelector.toString() + checkedWorkItem.executionData.slice(2);
+
+            calls.push({
+                allowFailure: true,
+                gasLimit: workItem.checkGasLimit,
+                value: workItem.value,
+                callData: callData,
             });
         }
 
         const startingBalance = await worker.provider.getBalance(worker.getAddress());
         console.log("Work data: ", workData);
+        console.log("Calls: ", calls);
 
         // Worker - Do work
-        const doWorkTx = await pool.connect(worker).performWork(batchId, 0, workData);
+        const doWorkTx = await pool.connect(worker).performWork(batchId, 0, workData, calls);
         const workReceipt = await doWorkTx.wait();
         if (!workReceipt) {
             throw new Error("No work receipt");
@@ -307,6 +319,16 @@ async function main() {
         const poolWorkPerformedEvents = workReceipt.logs?.filter((event) => event.topics[0] === POOL_WORK_PERFORMED_ID);
 
         console.log("\nPool work performed events: " + poolWorkPerformedEvents?.length);
+
+        // Find Debug(bytes4) events
+        const debugId = ethers.id("Debug(bytes4)");
+        const debugEvents = workReceipt.logs?.filter((event) => event.topics[0] === debugId);
+
+        console.log("\nDebug events: " + debugEvents?.length);
+        for (const event of debugEvents) {
+            const decoded = AbiCoder.defaultAbiCoder().decode(["bytes4"], event.data);
+            console.log(" - " + decoded[0]);
+        }
     } else {
         console.log("No work needed");
     }

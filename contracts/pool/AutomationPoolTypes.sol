@@ -79,14 +79,6 @@ interface AutomationPoolTypes {
 
     struct PerformWorkItem {
         /**
-         * @notice The maximum gas limit for the executor call.
-         */
-        uint64 maxGasLimit;
-        /**
-         * @notice The call value in wei, sent from the executor to the target contract.
-         */
-        uint128 value;
-        /**
          * @notice If work item execution is aggregated, this is the number of work items. Otherwise, this should be 1.
          */
         uint16 aggregateCount;
@@ -106,10 +98,6 @@ interface AutomationPoolTypes {
          * @notice Describes the work being performed. Only used for logging purposes.
          */
         bytes trigger;
-        /**
-         * @notice The data to be sent to the target contract.
-         */
-        bytes executionData;
     }
 
     struct WorkCheckParams {

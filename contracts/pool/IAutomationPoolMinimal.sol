@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {AutomationPoolTypes} from "./AutomationPoolTypes.sol";
+import {IPoolExecutor} from "./IPoolExecutor.sol";
 
 interface IAutomationPoolMinimal is AutomationPoolTypes {
     /******************************************************************************************************************
@@ -154,7 +155,12 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
             CheckedWorkItem[] memory checkedWorkItems
         );
 
-    function performWork(bytes32 batchId, uint256 flags, PerformWorkItem[] calldata workData) external;
+    function performWork(
+        bytes32 batchId,
+        uint256 flags,
+        PerformWorkItem[] calldata workData,
+        IPoolExecutor.Call[] calldata calls
+    ) external;
 
     function withdrawErc20(address token, address to, uint256 amount) external;
 }

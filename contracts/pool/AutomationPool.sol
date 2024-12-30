@@ -17,9 +17,13 @@ import {Roles} from "../access/Roles.sol";
 import {IDiamondLoupe} from "../diamond/interfaces/IDiamondLoupe.sol";
 import {IL1GasCalculator} from "../gas/IL1GasCalculator.sol";
 
+import "hardhat/console.sol";
+
 // TODO: Log check and perform item revert reasons
 contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPoolBase {
     using SafeERC20 for IERC20;
+
+    event Debug(bytes4 selector);
 
     /******************************************************************************************************************
      * INITIALIZER
@@ -317,7 +321,8 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
     function performWork(
         bytes32 batchId,
         uint256 workerFlags, // Currently unused. Reserved for future use.
-        PerformWorkItem[] calldata workData
+        PerformWorkItem[] calldata workData,
+        IPoolExecutor.Call[] calldata calls
     ) external virtual override nonReentrant {
         uint256 poolBalance = address(this).balance;
         if (poolBalance == 0) {
@@ -366,6 +371,11 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             revert("NoWork"); // TODO: Custom revert
         }
 
+        if (calls.length != workData.length) {
+            // Mismatch in work data and calls. Can only be caused by a worker error, so we revert.
+            revert("MismatchedWorkData"); // TODO: Custom revert
+        }
+
         if (batchId == bytes32(0)) {
             // Invalid batch ID. Can only be caused by a worker error, so we revert.
             revert("InvalidBatchId"); // TODO: Custom revert
@@ -410,69 +420,88 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                     aggregateWorkItemCount >= execParams.minBatchSize &&
                     aggregateWorkItemCount <= execParams.maxBatchSize
                 ) {
-                    // Create call array
-                    IPoolExecutor.Call[] memory calls = new IPoolExecutor.Call[](workLength);
+                    // Verify the call function matches the execution function
+                    bytes4 expectedSelector = execParams.selector;
+                    bool badCalls = false;
+                    for (uint256 j = 0; j < workLength; ++j) {
+                        bytes4 actualSelector;
+                        bytes calldata callData = calls[j].callData;
+                        if (callData.length < 4) {
+                            // Invalid call data. Can only be caused by a worker error, so we revert.
+                            revert("InvalidCallData"); // TODO: Custom revert
+                        }
+                        assembly {
+                            // Load the selector (first 4 bytes) from callData in calldata
+                            let callDataOffset := callData.offset
+                            calldatacopy(0x0, callDataOffset, 4) // Copy 4 bytes to memory at address 0x0
+                            actualSelector := mload(0x0) // Load those 4 bytes into actualSelector
+                        }
 
-                    // Populate call array
-                    for (uint256 i = 0; i < workLength; ++i) {
-                        PerformWorkItem calldata workItem = workData[i];
+                        if (actualSelector != expectedSelector) {
+                            // The selector does not match the expected selector. This can happen if the manager
+                            // changes the function after the worker has checked the work. We skip all work.
+                            badCalls = true;
 
-                        calls[i] = IPoolExecutor.Call(
-                            true,
-                            workItem.maxGasLimit,
-                            workItem.value,
-                            abi.encodePacked(execParams.selector, workItem.executionData)
-                        );
+                            break;
+                        }
                     }
 
-                    // Create results array
-                    IPoolExecutor.Result[] memory results;
+                    if (!badCalls) {
+                        // Create results array
+                        IPoolExecutor.Result[] memory results;
 
-                    // Execute the work
-                    try
-                        IPoolExecutor(executor).aggregateCalls{gas: execParams.maxGasLimit}(execParams.target, calls)
-                    returns (IPoolExecutor.Result[] memory _results) {
-                        results = _results;
-                        success = true;
-                    } catch {
-                        // Failed to perform work
-                    }
+                        // Execute the work
+                        try
+                            IPoolExecutor(executor).aggregateCalls{gas: execParams.maxGasLimit}(
+                                execParams.target,
+                                calls
+                            )
+                        returns (IPoolExecutor.Result[] memory _results) {
+                            results = _results;
+                            success = true;
+                        } catch {
+                            // Failed to perform work
+                        }
 
-                    if (success) {
-                        // Check results
-                        for (uint256 i = 0; i < workLength; ++i) {
-                            uint256 aggregateCount = workData[i].aggregateCount;
+                        if (success) {
+                            // Check results
+                            for (uint256 i = 0; i < workLength; ++i) {
+                                uint256 aggregateCount = workData[i].aggregateCount;
 
-                            if (results[i].success) {
-                                numSuccess += aggregateCount;
+                                if (results[i].success) {
+                                    numSuccess += aggregateCount;
 
-                                emit WorkItemExecution(
-                                    batchId,
-                                    execParams.target,
-                                    msg.sender,
-                                    aggregateCount,
-                                    Result.SUCCESS,
-                                    workData[i].trigger,
-                                    results[i].gasUsed,
-                                    block.timestamp
-                                );
-                            } else {
-                                numFailures += aggregateCount;
+                                    emit WorkItemExecution(
+                                        batchId,
+                                        execParams.target,
+                                        msg.sender,
+                                        aggregateCount,
+                                        Result.SUCCESS,
+                                        workData[i].trigger,
+                                        results[i].gasUsed,
+                                        block.timestamp
+                                    );
+                                } else {
+                                    numFailures += aggregateCount;
 
-                                emit WorkItemExecution(
-                                    batchId,
-                                    execParams.target,
-                                    msg.sender,
-                                    aggregateCount,
-                                    Result.FAILURE,
-                                    workData[i].trigger,
-                                    results[i].gasUsed,
-                                    block.timestamp
-                                );
+                                    emit WorkItemExecution(
+                                        batchId,
+                                        execParams.target,
+                                        msg.sender,
+                                        aggregateCount,
+                                        Result.FAILURE,
+                                        workData[i].trigger,
+                                        results[i].gasUsed,
+                                        block.timestamp
+                                    );
+                                }
                             }
+                        } else {
+                            // Executor reverted, skipping all work
+                            numSkipped = aggregateWorkItemCount;
                         }
                     } else {
-                        // Executor reverted, skipping all work
+                        // Bad calls. Skipping all work
                         numSkipped = aggregateWorkItemCount;
                     }
                 } else {
