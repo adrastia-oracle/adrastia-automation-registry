@@ -309,7 +309,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         bytes32 batchId,
         uint256 workerFlags, // Currently unused. Reserved for future use.
         PerformWorkItem[] calldata workData
-    ) external virtual override nonReentrant whenNotClosed {
+    ) external virtual override nonReentrant {
         uint256 poolBalance = address(this).balance;
         if (poolBalance == 0) {
             // This should only ever occur if this tx is quickly following another performWork tx that consumed all the
