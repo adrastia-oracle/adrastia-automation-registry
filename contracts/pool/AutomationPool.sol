@@ -347,7 +347,9 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
         gasData.gasStart = gasleft();
 
-        _authPerformWork();
+        address registry_ = registry;
+
+        _authPerformWork(registry_);
 
         if (workData.length == 0) {
             // No work to perform. Can only be caused by a worker error, so we revert.
@@ -363,8 +365,6 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         gasData.gasStart += _estimateInitialGas();
 
         WorkExecutionParams memory execParams = _executionParams[batchId];
-
-        address registry_ = registry;
 
         // Load gas data
         (
@@ -935,13 +935,13 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         // Checking for work may alter state, so we need to have the same restrictions as performing work.
     }
 
-    function _authPerformWork() internal view virtual {
+    function _authPerformWork(address registry_) internal view virtual {
         if (msg.sender == address(0)) {
             // Off-chain call. Allow.
             return;
         }
 
-        if (!IAccessControl(registry).hasRole(Roles.WORKER, msg.sender)) {
+        if (!IAccessControl(registry_).hasRole(Roles.WORKER, msg.sender)) {
             revert WorkerNotAuthorized(msg.sender);
         }
     }
