@@ -307,7 +307,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
     function performWork(
         bytes32 batchId,
-        uint256 flags, // Currently unused. Reserved for future use.
+        uint256 workerFlags, // Currently unused. Reserved for future use.
         PerformWorkItem[] calldata workData
     ) external virtual override nonReentrant whenNotClosed {
         {
@@ -330,7 +330,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             }
         }
 
-        flags; // Silence unused variable warning
+        workerFlags; // Silence unused variable warning
 
         PerformWorkGasData memory gasData;
 
