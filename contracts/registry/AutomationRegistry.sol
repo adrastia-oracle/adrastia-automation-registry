@@ -21,6 +21,8 @@ import {AutomationPoolTypes} from "../pool/AutomationPoolTypes.sol";
 import {IDiamondLoupe} from "../diamond/interfaces/IDiamondLoupe.sol";
 
 // TODO:Billin terms: getBillingTerms(pool) to support pool-specific billing terms in the future
+// TODO: Make min balance per batch
+// TODO: Billing initialized callback
 contract AutomationRegistry is IAutomationRegistry, Initializable, StandardRoleManagement {
     using SafeERC20 for IERC20;
     using Math for uint256;
