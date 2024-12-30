@@ -324,6 +324,10 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         PerformWorkItem[] calldata workData,
         IPoolExecutor.Call[] calldata calls
     ) external virtual override nonReentrant {
+        PerformWorkGasData memory gasData;
+
+        gasData.gasStart = gasleft();
+
         uint256 poolBalance = address(this).balance;
         if (poolBalance == 0) {
             // This should only ever occur if this tx is quickly following another performWork tx that consumed all the
@@ -357,10 +361,6 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         }
 
         workerFlags; // Silence unused variable warning
-
-        PerformWorkGasData memory gasData;
-
-        gasData.gasStart = gasleft();
 
         address registry_ = poolState1.registry;
 
