@@ -406,9 +406,13 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                     // Populate call array
                     for (uint256 i = 0; i < workLength; ++i) {
                         PerformWorkItem calldata workItem = workData[i];
-                        bytes memory call = bytes.concat(execParams.selector, workItem.executionData);
 
-                        calls[i] = IPoolExecutor.Call(true, workItem.maxGasLimit, workItem.value, call);
+                        calls[i] = IPoolExecutor.Call(
+                            true,
+                            workItem.maxGasLimit,
+                            workItem.value,
+                            abi.encodePacked(execParams.selector, workItem.executionData)
+                        );
                     }
 
                     // Create results array
