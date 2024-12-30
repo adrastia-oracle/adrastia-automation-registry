@@ -310,6 +310,17 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         uint256 workerFlags, // Currently unused. Reserved for future use.
         PerformWorkItem[] calldata workData
     ) external virtual override nonReentrant whenNotClosed {
+        uint256 poolBalance = address(this).balance;
+        if (poolBalance == 0) {
+            // This should only ever occur if this tx is quickly following another performWork tx that consumed all the
+            // funds. We revert to prevent the worker from wasting gas without compensation.
+            // The worker has already wasted gas for the calldata and initial call, but we don't want them to waste more.
+            // While we support gas debt, it's not 100% that we'll be paid back, so we place this restriction to prevent
+            // workers from wasting more gas.
+            // Registries can enforce a higher minimum balance and lower exec gas limit to prevent this.
+            revert InsufficientGasFunds(0, 0);
+        }
+
         {
             // Gas-efficient status check to ensure that the pool is not closed.
             PoolStatus status = _status;
@@ -480,34 +491,30 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
         // If the balance is insufficient, we consume the remaining balance and record the debt.
         // This is to prevent the worker from wasting gas without compensation.
-        {
-            uint256 poolBalance = address(this).balance;
+        if (poolBalance < gasData.totalGasCompensation) {
+            uint256 debt = gasData.totalGasCompensation - poolBalance;
 
-            if (poolBalance < gasData.totalGasCompensation) {
-                uint256 debt = gasData.totalGasCompensation - poolBalance;
+            // Recalculate gas compensation using the remaining balance
+            gasData.totalGasCompensation = poolBalance;
+            gasData.gasCompensationWithoutPremium =
+                (gasData.totalGasCompensation * 10000) /
+                (10000 + gasData.gasPremiumBasisPoints);
 
-                // Recalculate gas compensation using the remaining balance
-                gasData.totalGasCompensation = poolBalance;
-                gasData.gasCompensationWithoutPremium =
-                    (gasData.totalGasCompensation * 10000) /
-                    (10000 + gasData.gasPremiumBasisPoints);
+            // Calculate the gas preium portion of the debt
+            uint256 debtWithoutPremium = (debt * 10000) / (10000 + gasData.gasPremiumBasisPoints);
+            uint256 premiumDebt = debt - debtWithoutPremium;
 
-                // Calculate the gas preium portion of the debt
-                uint256 debtWithoutPremium = (debt * 10000) / (10000 + gasData.gasPremiumBasisPoints);
-                uint256 premiumDebt = debt - debtWithoutPremium;
+            // Calculate who the debt is owed to
+            // Note: Fees to registry and protocol are intentionally rounded down, in favor of workers
+            gasData.debtToProtocol = (premiumDebt * gasData.protocolFee) / 10000;
+            gasData.debtToRegistry = ((premiumDebt - gasData.debtToProtocol) * gasData.registryFee) / 10000;
+            gasData.debtToWorker = debt - gasData.debtToProtocol - gasData.debtToRegistry;
 
-                // Calculate who the debt is owed to
-                // Note: Fees to registry and protocol are intentionally rounded down, in favor of workers
-                gasData.debtToProtocol = (premiumDebt * gasData.protocolFee) / 10000;
-                gasData.debtToRegistry = ((premiumDebt - gasData.debtToProtocol) * gasData.registryFee) / 10000;
-                gasData.debtToWorker = debt - gasData.debtToProtocol - gasData.debtToRegistry;
+            uint256 oldTotalGasDebt = _totalGasDebt;
 
-                uint256 oldTotalGasDebt = _totalGasDebt;
+            _addGasDebt(msg.sender, gasData.debtToProtocol, gasData.debtToRegistry, gasData.debtToWorker);
 
-                _addGasDebt(msg.sender, gasData.debtToProtocol, gasData.debtToRegistry, gasData.debtToWorker);
-
-                emit GasDebtUpdated(msg.sender, GasDebtChange.INCREASE, debt, oldTotalGasDebt + debt, block.timestamp);
-            }
+            emit GasDebtUpdated(msg.sender, GasDebtChange.INCREASE, debt, oldTotalGasDebt + debt, block.timestamp);
         }
 
         // Calculate the amount of gas compensation that the registry collects
