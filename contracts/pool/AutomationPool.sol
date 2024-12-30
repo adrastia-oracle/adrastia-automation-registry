@@ -310,8 +310,25 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         uint256 flags, // Currently unused. Reserved for future use.
         PerformWorkItem[] calldata workData
     ) external virtual override nonReentrant whenNotClosed {
-        // whenNotClosed is used to allow work to be closed up until the closing time, as a mechanism to prevent the
-        // manager from causing the worker to waste gas.
+        {
+            // Gas-efficient status check to ensure that the pool is not closed.
+            PoolStatus status = _status;
+            if (status == PoolStatus.CLOSING) {
+                // Might be closed. Let's check if it's past the closing time.
+                BillingState memory billing = _billingState;
+
+                uint256 closeTime = billing.closeStartTime + billing.closingPeriod;
+
+                if (block.timestamp >= closeTime) {
+                    status = PoolStatus.CLOSED;
+                }
+            }
+
+            if (status == PoolStatus.CLOSED) {
+                // Nothing should get through here. The pool is closed.
+                revert PoolIsClosed();
+            }
+        }
 
         flags; // Silence unused variable warning
 
