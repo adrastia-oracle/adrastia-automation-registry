@@ -6,9 +6,10 @@ import {AutomationPoolTypes} from "./AutomationPoolTypes.sol";
 
 contract AutomationPoolStorage is IAutomationPoolStorage, AutomationPoolTypes {
     uint256 public override id;
-    address public override registry;
     address public override executor;
     address public override diamond;
+
+    PoolState1 _poolState1;
 
     BillingState internal _billingState;
 
@@ -21,8 +22,6 @@ contract AutomationPoolStorage is IAutomationPoolStorage, AutomationPoolTypes {
     mapping(bytes32 => WorkExecutionParams) internal _executionParams;
 
     bytes32[] internal _activeBatchIds;
-
-    PoolStatus internal _status;
 
     PoolMetadata internal _metadata;
 }

@@ -50,7 +50,7 @@ contract AutomationPoolBase is
      *****************************************************************************************************************/
 
     function getPoolStatus() public view virtual returns (PoolStatus) {
-        PoolStatus status = _status;
+        PoolStatus status = _poolState1.status;
         if (status == PoolStatus.OPEN) {
             BillingState memory billing = _billingState;
             uint256 nextBillingTime = billing.nextBillingTime;

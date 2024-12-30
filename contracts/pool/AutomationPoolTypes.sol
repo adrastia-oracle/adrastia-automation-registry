@@ -180,6 +180,14 @@ interface AutomationPoolTypes {
         string description;
     }
 
+    struct PoolState1 {
+        // SLOT 1: 224 bits
+        uint16 activeBatchCount;
+        uint32 flags;
+        PoolStatus status;
+        address registry;
+    }
+
     enum OffchainCheckDataHandling {
         NIL,
         IGNORE,

@@ -38,7 +38,7 @@ contract BillingFacet is IBillingFacet, AutomationPoolBase {
         } else if (capacity < nextBatchCapacity) {
             // Decrease the batch capacity. Ensure that this new capacity is less than or equal to the active
             // batch count.
-            uint32 activeBatchesLength = uint32(_activeBatchIds.length);
+            uint32 activeBatchesLength = uint32(_poolState1.activeBatchCount);
             if (capacity < activeBatchesLength) {
                 revert BillingCapacityTooLow(capacity, activeBatchesLength);
             }
@@ -47,7 +47,7 @@ contract BillingFacet is IBillingFacet, AutomationPoolBase {
         } else {
             // Capacity is larger than the next batch capacity.
 
-            address registry_ = registry;
+            address registry_ = _poolState1.registry;
 
             (
                 IERC20 billingToken,
@@ -128,13 +128,15 @@ contract BillingFacet is IBillingFacet, AutomationPoolBase {
         BillingState storage billing = _billingState;
         uint256 paidBatchCapacity = billing.paidBatchCapacity;
 
+        address registry_ = _poolState1.registry;
+
         if (capacity <= paidBatchCapacity) {
             uint256 remainingBillingTime_ = remainingBillingTime();
 
             if (remainingBillingTime_ == 0) {
                 // Not in an active billing cycle. Get the billing token from the registry.
 
-                (address billingToken_, , , , , ) = IAutomationRegistry(registry).getFeeConfig();
+                (address billingToken_, , , , , ) = IAutomationRegistry(registry_).getFeeConfig();
 
                 billingToken = IERC20(billingToken_);
             } else {
@@ -147,7 +149,7 @@ contract BillingFacet is IBillingFacet, AutomationPoolBase {
         }
 
         (billingToken, totalFee, , , , ) = _calculateIncreaseCapacityFees(
-            registry,
+            registry_,
             billing,
             paidBatchCapacity,
             capacity
@@ -208,7 +210,7 @@ contract BillingFacet is IBillingFacet, AutomationPoolBase {
             if (billingToken.balanceOf(address(this)) < totalFee) {
                 if (block.timestamp >= billing.nextBillingTime + billing.gracePeriod) {
                     // Grace period has passed. Start closing the pool.
-                    _status = PoolStatus.CLOSING;
+                    _poolState1.status = PoolStatus.CLOSING;
                     billing.closeStartTime = uint32(block.timestamp);
 
                     emit PoolClosed(CloseReason.ACCOUNT_OVERDUE, block.timestamp);
@@ -217,7 +219,7 @@ contract BillingFacet is IBillingFacet, AutomationPoolBase {
                 }
             }
 
-            address registry_ = registry;
+            address registry_ = _poolState1.registry;
 
             // Note: This may revert if the pool does not have enough funds
             billingToken.safeTransfer(registry_, totalFee);
@@ -302,7 +304,7 @@ contract BillingFacet is IBillingFacet, AutomationPoolBase {
             uint32 maintenanceInterval,
             uint32 gracePeriod_,
             uint32 closingPeriod_
-        ) = IAutomationRegistry(registry).getFeeConfig();
+        ) = IAutomationRegistry(_poolState1.registry).getFeeConfig();
 
         billingToken = IERC20(billingToken_);
         maintenanceFee = maintenanceFee_;

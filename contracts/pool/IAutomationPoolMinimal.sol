@@ -126,6 +126,8 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
      * FUNCTIONS
      *****************************************************************************************************************/
 
+    function registry() external view returns (address);
+
     function isBatchActive(bytes32 batchId) external view returns (bool);
 
     function closePool() external;

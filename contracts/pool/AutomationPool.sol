@@ -35,9 +35,9 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             revert InvalidAdmin(admin);
         }
 
-        registry = registry_;
+        _poolState1 = PoolState1({activeBatchCount: 0, flags: 0, status: PoolStatus.OPEN, registry: registry_});
+
         id = id_;
-        _status = PoolStatus.OPEN;
         diamond = diamond_;
 
         _initializeRoles(admin);
@@ -111,6 +111,10 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         }
     }
 
+    function registry() external view virtual override returns (address) {
+        return _poolState1.registry;
+    }
+
     function isBatchActive(bytes32 batchId) external view virtual override returns (bool) {
         PoolStatus status = getPoolStatus();
         if (status != PoolStatus.OPEN && status != PoolStatus.NOTICE) {
@@ -151,7 +155,12 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         WorkExecutionParams memory execParams = _executionParams[batchId];
 
         // Check restrictions
-        (uint256 checkGasLimit, ) = _checkCheckExecutionRestrictions(registry, batchId, checkParams, execParams);
+        (uint256 checkGasLimit, ) = _checkCheckExecutionRestrictions(
+            _poolState1.registry,
+            batchId,
+            checkParams,
+            execParams
+        );
         if (checkParams.maxGasLimit < checkGasLimit) {
             // The check gas limit is lower than the pool's restrictions. Let's use the lower limit.
             checkGasLimit = checkParams.maxGasLimit;
@@ -321,9 +330,10 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             revert InsufficientGasFunds(0, 0);
         }
 
+        PoolState1 memory poolState1 = _poolState1;
         {
             // Gas-efficient status check to ensure that the pool is not closed.
-            PoolStatus status = _status;
+            PoolStatus status = poolState1.status;
             if (status == PoolStatus.CLOSING) {
                 // Might be closed. Let's check if it's past the closing time.
                 BillingState memory billing = _billingState;
@@ -347,7 +357,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
         gasData.gasStart = gasleft();
 
-        address registry_ = registry;
+        address registry_ = poolState1.registry;
 
         _authPerformWork(registry_);
 
@@ -604,7 +614,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                 uint256 debtToRegistry = _gasDebt.registryDebt;
 
                 // Pay off registry debt and inform the registry
-                IAutomationRegistry(registry).poolGasDebtRecovered{value: debtToProtocol + debtToRegistry}(
+                IAutomationRegistry(_poolState1.registry).poolGasDebtRecovered{value: debtToProtocol + debtToRegistry}(
                     id,
                     debtToProtocol,
                     debtToRegistry,
@@ -636,7 +646,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             // Enforce minimum balance
             uint256 balance = address(this).balance;
             uint256 balanceAfter = balance - amount;
-            (, , uint96 minBalance) = IAutomationRegistry(registry).getPoolRestrictions();
+            (, , uint96 minBalance) = IAutomationRegistry(_poolState1.registry).getPoolRestrictions();
             if (balanceAfter < minBalance) {
                 revert MinimumBalanceRestriction(minBalance);
             }
@@ -677,18 +687,21 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
         // Start closing the pool
         _billingState.closeStartTime = uint32(block.timestamp);
-        _status = PoolStatus.CLOSING;
+        _poolState1.status = PoolStatus.CLOSING;
 
-        IAutomationRegistry(registry).poolClosedCallback(id);
+        address registry_ = _poolState1.registry;
 
+        IAutomationRegistry(registry_).poolClosedCallback(id);
+
+        // TODO: More info?
         emit PoolClosed(
-            msg.sender == registry ? CloseReason.ADMINISTRATIVE : CloseReason.USER_REQUEST,
+            msg.sender == registry_ ? CloseReason.ADMINISTRATIVE : CloseReason.USER_REQUEST,
             block.timestamp
         );
     }
 
     function getPoolType() external view virtual override returns (uint16) {
-        return IAutomationRegistry(registry).poolType();
+        return IAutomationRegistry(_poolState1.registry).poolType();
     }
 
     function getTotalGasDebt() external view virtual override returns (uint256) {
@@ -968,7 +981,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
         if (!hasRole(poolRole, msg.sender)) {
             // Not a pool manager. Check if it's the registry.
-            if (msg.sender != registry) {
+            if (msg.sender != _poolState1.registry) {
                 revert AccessControlUnauthorizedAccount(msg.sender, poolRole);
             }
         }

@@ -40,7 +40,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
         }
 
         // Fetch pool restrictions
-        (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(registry)
+        (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(_poolState1.registry)
             .getPoolRestrictions();
 
         // Validate params
@@ -55,6 +55,8 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
         _executionParams[batchId] = work.executionParams;
 
         _activeBatchIds.push(batchId);
+
+        _poolState1.activeBatchCount += 1;
 
         emit BatchRegistionChanged(batchId, true, block.timestamp);
 
@@ -80,6 +82,8 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
             }
         }
         _activeBatchIds = newActiveBatches;
+
+        _poolState1.activeBatchCount -= 1;
 
         WorkCheckParams memory emptyWork = WorkCheckParams({
             target: address(0),
@@ -129,7 +133,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
         }
 
         // Fetch pool restrictions
-        (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(registry)
+        (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(_poolState1.registry)
             .getPoolRestrictions();
 
         // Validate params
@@ -186,7 +190,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
         }
 
         // Fetch pool restrictions
-        (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(registry)
+        (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(_poolState1.registry)
             .getPoolRestrictions();
 
         _validateCheckParams(batchId, checkParams, registryCheckGasLimit, true);
@@ -234,7 +238,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
 
         checkParams.workItems[index] = workItem;
 
-        (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(registry)
+        (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(_poolState1.registry)
             .getPoolRestrictions();
 
         _validateCheckParams(batchId, checkParams, registryCheckGasLimit, true);
@@ -297,7 +301,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
         checkParams.workItems = newWorkItems;
 
         // Fetch pool restrictions
-        (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(registry)
+        (uint64 registryCheckGasLimit, uint64 registryExecutionGasLimit, ) = IAutomationRegistry(_poolState1.registry)
             .getPoolRestrictions();
 
         // Validate params to ensure we're still valid
@@ -340,7 +344,7 @@ contract WorkFacet is IWorkFacet, AutomationPoolBase {
     }
 
     function getBatchesCount() external view virtual override returns (uint256) {
-        return _activeBatchIds.length;
+        return _poolState1.activeBatchCount;
     }
 
     function batchExists(bytes32 batchId) external view virtual override returns (bool) {
