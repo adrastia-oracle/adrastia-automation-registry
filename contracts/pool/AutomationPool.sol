@@ -494,10 +494,9 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                 l1GasFee = IL1GasCalculator(gasData.l1GasCalculator).calculateL1GasFee(msg.data.length);
             }
 
-            gasData.gasUsed = gasData.gasStart - gasleft();
+            gasData.gasUsed = (gasData.gasStart - gasleft()) + gasData.gasOverhead;
 
-            gasData.gasCompensationWithoutPremium = (((gasData.gasUsed + gasData.gasOverhead) * gasData.gasPrice) +
-                l1GasFee);
+            gasData.gasCompensationWithoutPremium = ((gasData.gasUsed * gasData.gasPrice) + l1GasFee);
             gasData.totalGasCompensation =
                 (gasData.gasCompensationWithoutPremium * (10000 + gasData.gasPremiumBasisPoints)) /
                 10000;
