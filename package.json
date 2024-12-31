@@ -37,7 +37,7 @@
     "test": "hardhat test",
     "clean": "hardhat clean",
     "deploy:mock": "hardhat ignition deploy ignition/modules/mock-environment.ts --network localhost",
-    "deploy:testnet": "hardhat ignition deploy ignition/modules/protocol-module.ts --parameters ignition/parameters/testnet.json --network arbitrumSepolia --reset",
+    "deploy:testnet": "hardhat ignition deploy ignition/modules/protocol-module.ts --parameters ignition/parameters/testnet.json --reset",
     "typechain:generate": "yarn typechain --target=ethers-v5 artifacts/contracts/**/*[!dbg].json --out-dir=./typechain-v5/automatos-protocol"
   },
   "dependencies": {
