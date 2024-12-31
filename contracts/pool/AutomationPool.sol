@@ -314,12 +314,19 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         uint256 debtToWorker;
     }
 
+    // Gas: Overhead is estimated to be about 153k gas. Gas measurement accounts for most of this, with the following
+    // not included:
+    //  - Reentrancy check: ~5k gas
+    //  - BatchExecution log: ~4k gas
+    //  - Registry callback: ~19k gas
+    //  - Load ID at the end: ~2k gas
+    //    - Total: ~30k gas
     function performWork(
         bytes32 batchId,
         uint256 workerFlags, // Currently unused. Reserved for future use.
         PerformWorkItem[] calldata workData,
         IPoolExecutor.Call[] calldata calls
-    ) external virtual override nonReentrant {
+    ) external virtual override nonReentrant /* ~5k gas */ {
         PerformWorkGasData memory gasData;
 
         gasData.gasStart = gasleft();
@@ -360,7 +367,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
 
         address registry_ = poolState1.registry;
 
-        _authPerformWork(registry_);
+        _authPerformWork(registry_); // ~14k gas
 
         if (workData.length == 0) {
             // No work to perform. Can only be caused by a worker error, so we revert.
@@ -390,7 +397,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             gasData.l1GasCalculator,
             gasData.gasPremiumBasisPoints,
             gasData.protocolFee
-        ) = IAutomationRegistry(registry_).getGasData();
+        ) = IAutomationRegistry(registry_).getGasData(); // ~25k gas
 
         // Check execution restrictions and get gas and fee info
         ExecutionError pError = _checkPerformExecutionRestrictions(execParams);
@@ -476,7 +483,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
                                         workData[i].trigger,
                                         results[i].gasUsed,
                                         block.timestamp
-                                    );
+                                    ); // ~5k gas (can be more or less depending on trigger)
                                 } else {
                                     numFailures += aggregateCount;
 
@@ -587,7 +594,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             gasData.totalGasCompensation,
             gasData.debtToProtocol + gasData.debtToRegistry + gasData.debtToWorker,
             block.timestamp
-        );
+        ); // ~4k gas
 
         // Inform the registry about the work performed
         IAutomationRegistry(registry_).poolWorkPerformedCallback{value: feeToProtocol + feeToRegistry}(
@@ -600,7 +607,7 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             gasData.debtToWorker,
             gasData.debtToRegistry,
             gasData.debtToProtocol
-        );
+        ); // ~19k gas
     }
 
     function depositGasFunds() external payable virtual override nonReentrant {
