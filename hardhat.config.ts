@@ -22,6 +22,10 @@ const config: HardhatUserConfig = {
             url: process.env.ARBITRUM_SEPOLIA_URL || "",
             accounts: [process.env.PRIVATE_KEY_DEPLOYER || ""],
         },
+        optimismSepolia: {
+            url: process.env.OPTIMISM_SEPOLIA_URL || "",
+            accounts: [process.env.PRIVATE_KEY_DEPLOYER || ""],
+        },
     },
     mocha: {
         timeout: 60000, // 60 seconds
@@ -29,6 +33,7 @@ const config: HardhatUserConfig = {
     etherscan: {
         apiKey: {
             arbitrumSepolia: process.env.ARBISCAN_SEPOLIA_API_KEY || "",
+            optimismSepolia: process.env.OPSCAN_SEPOLIA_API_KEY || "",
         },
         customChains: [
             {
@@ -37,6 +42,14 @@ const config: HardhatUserConfig = {
                 urls: {
                     apiURL: "https://api-sepolia.arbiscan.io/api",
                     browserURL: "https://sepolia.arbiscan.io",
+                },
+            },
+            {
+                network: "optimismSepolia",
+                chainId: 11155420,
+                urls: {
+                    apiURL: "https://api-sepolia-optimism.etherscan.io/api",
+                    browserURL: "https://sepolia-optimism.etherscan.io",
                 },
             },
         ],
