@@ -107,7 +107,7 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
 
     error InsufficientGasFunds(uint256 minBalance, uint256 balance);
 
-    error MinimumBalanceRestriction(uint96 minBalance);
+    error MinimumBalanceRestriction(uint256 minBalance);
 
     error PoolAlreadyClosed();
 

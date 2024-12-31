@@ -673,10 +673,13 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         if (getPoolStatus() != PoolStatus.CLOSED) {
             // Pool is not closed, so restrictions apply
 
+            PoolState1 memory poolState1 = _poolState1;
+
             // Enforce minimum balance
             uint256 balance = address(this).balance;
             uint256 balanceAfter = balance - amount;
-            (, , uint96 minBalance) = IAutomationRegistry(_poolState1.registry).getPoolRestrictions();
+            (, , uint96 minBalancePerBatch) = IAutomationRegistry(poolState1.registry).getPoolRestrictions();
+            uint256 minBalance = uint256(minBalancePerBatch) * poolState1.activeBatchCount;
             if (balanceAfter < minBalance) {
                 revert MinimumBalanceRestriction(minBalance);
             }
@@ -918,8 +921,9 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         // Fetch pool restrictions.
         // Note: We discard restrictions on gas limits. This allows pools to continue operating even if the registry
         // changes the restrictions (restrictions are checked when changing work).
-        uint256 minBalance;
-        (checkGasLimit, executionGasLimit, minBalance) = IAutomationRegistry(registry_).getPoolRestrictions();
+        uint256 minBalancePerBatch;
+        (checkGasLimit, executionGasLimit, minBalancePerBatch) = IAutomationRegistry(registry_).getPoolRestrictions();
+        uint256 minBalance = minBalancePerBatch * _poolState1.activeBatchCount;
 
         // Check the perform gas limit against the registry restriction.
         // Note that we don't check the check gas limit (we just use the lower of the two. If the call fails b/c of

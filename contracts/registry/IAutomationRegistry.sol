@@ -334,7 +334,8 @@ interface IAutomationRegistry {
      * @notice Get the pool restrictions for the automation system.
      * @return checkGasLimit The maximum gas limit to check for work.
      * @return executionGasLimit The maximum gas limit to perform work.
-     * @return minBalance The minimum balance required to execute the automation.
+     * @return minBalance The minimum balance per batch required to execute the automation. This is always multiplied by
+     * the pool's active batch count to determine the total minimum balance required for any single batch execution.
      */
     function getPoolRestrictions()
         external
