@@ -755,6 +755,19 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
         _setMetadata(metadata);
     }
 
+    function calculateMinimumGasFundsRequired() external view virtual returns (uint256) {
+        PoolStatus status = getPoolStatus();
+        if (status == PoolStatus.CLOSED) {
+            // Pool is closed. No minimum gas funds required.
+            return 0;
+        }
+
+        PoolState1 memory poolState1 = _poolState1;
+        (, , uint96 minBalancePerBatch) = IAutomationRegistry(poolState1.registry).getPoolRestrictions();
+
+        return uint256(minBalancePerBatch) * poolState1.activeBatchCount;
+    }
+
     /******************************************************************************************************************
      * PUBLIC FUNCTIONS
      *****************************************************************************************************************/

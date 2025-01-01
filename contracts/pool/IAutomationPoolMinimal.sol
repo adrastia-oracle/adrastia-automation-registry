@@ -163,4 +163,6 @@ interface IAutomationPoolMinimal is AutomationPoolTypes {
     ) external;
 
     function withdrawErc20(address token, address to, uint256 amount) external;
+
+    function calculateMinimumGasFundsRequired() external view returns (uint256);
 }
