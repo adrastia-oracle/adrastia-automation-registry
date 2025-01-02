@@ -683,6 +683,8 @@ contract AutomationPool is IAutomationPoolMinimal, Initializable, AutomationPool
             if (balanceAfter < minBalance) {
                 revert MinimumBalanceRestriction(minBalance);
             }
+
+            // TODO: Enforce a batch unregistration delay before allowing withdrawal
         }
 
         if (amount > 0) {
