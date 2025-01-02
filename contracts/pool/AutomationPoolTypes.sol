@@ -114,7 +114,7 @@ interface AutomationPoolTypes {
          * noticed and the time it is expected to be performed. During this time, if the worker notices the work is no
          * longer required, they will not execute the work and the delay will be reset.
          */
-        uint32 executionDelay; // TODO: Change in UI to ms. Recently changed from uint16 to uint32
+        uint32 executionDelay;
         uint64 chainId;
         // Slots 3+
         bytes selector; // Function selector or event topics
